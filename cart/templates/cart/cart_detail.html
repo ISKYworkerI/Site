@@ -1,0 +1,168 @@
+{% extends "main/base.html" %}
+{% load static %}
+
+{% block title %}Cart{% endblock title %}
+
+{% block content %}
+    <style>
+        /* Анимация только для Special Instructions */
+        #specialInstructionsContent {
+            opacity: 0;
+            max-height: 0;
+            overflow: hidden;
+            transition: opacity 0.3s ease, max-height 0.3s ease;
+        }
+
+        #specialInstructionsContent.open {
+            opacity: 1;
+            max-height: 300px; /* Достаточно для формы и текста */
+        }
+
+        .toggle-btn-cart-page {
+            transition: transform 0.3s ease;
+        }
+
+        .toggle-btn-cart-page.open {
+            transform: rotate(90deg);
+        }
+    </style>
+
+    <div class="container-cart-page">
+        <div class="d-flex justify-content-between for-mpb">
+            <div class="col-md-8">
+                <div class="header-cart-page">
+                    <h1 class="title-cart-page">YOUR CART</h1>
+                </div>
+                
+                <!-- Cart Items -->
+                <div id="cart-items-container" hx-get="{% url 'cart:cart_items' %}" hx-trigger="updateCartItems from:body">
+                    {% include 'cart/partials/cart_items.html' %}
+                </div>
+                
+                {% if cart.cart.products %}
+                    <!-- Special Instructions Section -->
+                    <div class="section-cart-page">
+                        <div class="section-header-cart-page" id="specialInstructionsHeader">
+                            <h3 class="section-title-cart-page">ADD ORDER SPECIAL INSTRUCTIONS</h3>
+                            <button class="toggle-btn-cart-page">→</button>
+                        </div>
+                        <div class="section-content-cart-page" id="specialInstructionsContent" style="display: none;">
+                            <form method="POST" hx-post="{% url 'cart:cart_detail' %}" hx-target="#specialInstructionsContent" hx-swap="innerHTML">
+                                {% csrf_token %}
+                                <textarea name="special_instructions" class="form-control text-inst" rows="3" placeholder="Add any special instructions for your order here">{{ special_instructions }}</textarea>
+                                <button type="submit" class="btn-save-instructions">Save</button>
+                            </form>
+                            {% if special_instructions %}
+                                <p class="saved-instructions">Saved instructions: {{ special_instructions }}</p>
+                            {% endif %}
+                        </div>
+                    </div>
+                {% endif %}
+                
+                <!-- Samples Section -->
+                <div class="section-cart-page">
+                    <p class="text-in-cart-page">
+                        Due to national holidays, shipping may take a little longer than usual. We truly appreciate your patience <br> and understanding. 
+                    </p>
+                    <div class="section-header-cart-page" id="sample-counter" hx-get="{% url 'cart:sample_counter' %}" hx-trigger="updateSampleCounter from:body">
+                        {% include 'cart/partials/sample_counter.html' %}
+                    </div>
+                    <div class="section-content-cart-page">
+                        <div class="samples-grid-cart-page" id="samples-grid">
+                            {% for sample in samples %}
+                            <form method="POST" class="sample-form" 
+                                  hx-post="{% url 'cart:cart_add_sample' sample.id %}" 
+                                  hx-target="#cart-items-container" 
+                                  hx-swap="outerHTML" {% if not cart.cart.products %}disabled{% endif %}>
+                                {% csrf_token %}
+                                <input type="hidden" name="sample_id" value="{{ sample.id }}">
+                                <button type="submit" class="sample-item-cart-page {% if sample.id in cart.cart.samples %}selected{% endif %}" {% if cart.cart.samples|length >= 2 and sample.id not in cart.cart.samples or not cart.cart.products %}disabled{% endif %}>
+                                    <div class="sample-image-cart-page">
+                                        <img src="{{ sample.image.url }}" alt="{{ sample.name }}">
+                                    </div>
+                                    <div class="sample-name-cart-page">{{ sample.name|upper }}</div>
+                                    <div class="add-icon-cart-page">
+                                        {% if sample.id in cart.cart.samples %}-{% else %}+{% endif %}
+                                    </div>
+                                </button>
+                            </form>
+                            {% endfor %}
+                        </div>
+                    </div>
+                </div>
+                
+                {% if cart.cart.products %}
+                    <!-- Gift Box Section -->
+                    <div class="section-cart-page">
+                        <div class="section-header-cart-page">
+                            <h3 class="section-title-cart-page">IS THIS ORDER A GIFT? CHOOSE A SPECIAL BOX</h3>
+                        </div>
+                        <div class="section-content-cart-page">
+                            {% for gift in gifts %}
+                            <div class=" {% if cart.cart.gift_wrap == gift.id|safe %}selected{% endif %}">
+                                <form method="POST" class="gift-form d-flex" 
+                                      hx-post="{% url 'cart:cart_add_gift' gift.id %}" 
+                                      hx-target="#cart-items-container" 
+                                      hx-swap="outerHTML">
+                                    {% csrf_token %}
+                                    <input type="hidden" name="gift_id" value="{{ gift.id }}">
+                                    <button type="submit" class="gift-button-cart-page">
+                                        <div class="gift-image-cart-page">
+                                            <img src="{{ gift.image.url }}" alt="{{ gift.name }}">
+                                        </div>
+                                        <div class="gift-details-cart-page">
+                                            <div class="gift-name-cart-page">{{ gift.name|upper }}</div>
+                                            <div class="gift-price-cart-page">€{{ gift.price }}</div>
+                                        </div>
+                                        <div class="add-icon-cart-page" style="position: absolute; top: 10px; right: 10px;">
+                                            {% if cart.cart.gift_wrap == gift.id|safe %}-{% else %}+{% endif %}
+                                        </div>
+                                    </button>
+                                </form>
+                            </div>
+                            {% endfor %}
+                        </div>
+                    </div>
+                {% endif %}
+            </div>
+            
+            <!-- Summary Section -->
+            <div class="">
+                <div id="cart-summary" hx-get="{% url 'cart:cart_summary' %}" hx-trigger="updateCartSummary from:body">
+                    {% include 'cart/partials/cart_summary.html' %}
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        document.addEventListener('DOMContentLoaded', function() {
+            // Special Instructions toggle
+            const specialInstructionsHeader = document.getElementById('specialInstructionsHeader');
+            const specialInstructionsContent = document.getElementById('specialInstructionsContent');
+            const toggleBtn = specialInstructionsHeader?.querySelector('.toggle-btn-cart-page');
+
+            if (specialInstructionsHeader && specialInstructionsContent && toggleBtn) {
+                specialInstructionsHeader.addEventListener('click', function() {
+                    const isHidden = specialInstructionsContent.style.display === 'none';
+                    if (isHidden) {
+                        // Открытие: сначала показываем блок, затем запускаем анимацию
+                        specialInstructionsContent.style.display = 'block';
+                        setTimeout(() => {
+                            specialInstructionsContent.classList.add('open');
+                            toggleBtn.classList.add('open');
+                        }, 10); // Небольшая задержка для запуска анимации
+                    } else {
+                        // Закрытие: убираем анимацию, затем скрываем блок
+                        specialInstructionsContent.classList.remove('open');
+                        toggleBtn.classList.remove('open');
+                        setTimeout(() => {
+                            specialInstructionsContent.style.display = 'none';
+                        }, 10); // Задержка равна длительности анимации
+                    }
+                    toggleBtn.textContent = isHidden ? '↓' : '→';
+                });
+            }
+        });
+    </script>
+{% endblock content %}

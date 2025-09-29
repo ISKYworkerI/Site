@@ -1,0 +1,539 @@
+{% extends "main/base.html" %}
+{% load static %}
+
+{% block title %}{{ perfume.name|safe }}{% endblock title %}
+
+{% block content %}
+<div class="product-gallery">
+    {% if perfume.images.all %}
+        <!-- Контейнер для всех изображений -->
+        <div class="gallery-images">
+            {% for image in perfume.images.all %}
+                <img src="{{ image.image.url }}" 
+                     alt="{{ perfume.name|safe }}" 
+                     class="gallery-image {% if forloop.first %}active{% endif %}" 
+                     data-index="{{ forloop.counter0 }}"
+                     style="position: absolute; top: 0; left: 0; opacity: {% if forloop.first %}1{% else %}0{% endif %};">
+            {% endfor %}
+        </div>
+
+        <!-- Скрытый контейнер для предварительной загрузки всех изображений -->
+        <div style="display: none;">
+            {% for image in perfume.images.all %}
+                <img src="{{ image.image.url }}" alt="preload">
+            {% endfor %}
+        </div>
+        
+        {% if perfume.images.all.count > 1 %}
+            <button class="gallery-arrow gallery-prev" id="prevBtn">
+                <i class="fas fa-chevron-left"></i>
+            </button>
+            
+            <button class="gallery-arrow gallery-next" id="nextBtn">
+                <i class="fas fa-chevron-right"></i>
+            </button>
+            
+            <div class="gallery-nav">
+                {% for image in perfume.images.all %}
+                    <div class="gallery-dot {% if forloop.first %}active{% endif %}" data-index="{{ forloop.counter0 }}"></div>
+                {% endfor %}
+            </div>
+        {% endif %}
+    {% else %}
+        <img src="{% static 'images/placeholder.svg' %}" alt="{{ perfume.name|safe }}" class="gallery-image">
+    {% endif %}
+</div>
+
+<div class="product-panel fade-in">
+    <div class="panel-header">
+        <a href="{% url 'main:catalog' %}" class="back-button">
+            <i class="fas fa-arrow-left"></i> Back to Catalog
+        </a>
+    </div>
+    
+    <div class="panel-body">
+        <div class="product-collection">{{ perfume.category|safe }}</div>
+        <h1 class="product-title-detail titles-cinzel text-uppercase">{{ perfume.name|safe }}</h1>
+        <div class="product-price-detail">
+            {% if perfume.discount > 0 %}
+                <span class="original-price">€{{ perfume.price }}</span>
+                €{{ perfume.get_price_with_discount }}
+            {% else %}
+                €{{ perfume.price }}
+            {% endif %}
+        </div>
+        
+        <div class="rating">
+            <div class="stars">
+                <i class="fas fa-star"></i>
+                <i class="fas fa-star"></i>
+                <i class="fas fa-star"></i>
+                <i class="fas fa-star"></i>
+                <i class="fas fa-star"></i>
+            </div>
+            <div class="review-count">0 reviews</div>
+        </div>
+        
+        <div class="product-description">
+            {{ perfume.description|safe }}
+        </div>
+    </div>
+    
+    {% if perfume.olfactory_family or perfume.top_notes.exists or perfume.middle_notes.exists or perfume.base_notes.exists %}
+    <div class="panel-section">
+        <div class="option-header">
+            <div class="option-title">OLFACTORY FAMILY:</div>
+            <button class="option-toggle" id="olfactoryToggle">
+                <i class="fas fa-plus"></i>
+            </button>
+        </div>
+        
+        {% if perfume.olfactory_family %}
+            <div>{{ perfume.olfactory_family.name|safe }}</div>
+        {% endif %}
+        
+        <div class="olfactory-notes" style="display: none;">
+            {% if perfume.top_notes.exists %}
+                <div class="notes-group">
+                    <h4 class="notes-group-title">TOP:</h4>
+                    <p>
+                        {% for note in perfume.top_notes.all %}
+                            {{ note.name|safe }}{% if not forloop.last %}, {% endif %}
+                        {% endfor %}
+                    </p>
+                </div>
+            {% endif %}
+            
+            {% if perfume.middle_notes.exists %}
+                <div class="notes-group">
+                    <h4 class="notes-group-title">MIDDLE:</h4>
+                    <p>
+                        {% for note in perfume.middle_notes.all %}
+                            {{ note.name|safe }}{% if not forloop.last %}, {% endif %}
+                        {% endfor %}
+                    </p>
+                </div>
+            {% endif %}
+            
+            {% if perfume.base_notes.exists %}
+                <div class="notes-group">
+                    <h4 class="notes-group-title">BASE:</h4>
+                    <p>
+                        {% for note in perfume.base_notes.all %}
+                            {{ note.name|safe }}{% if not forloop.last %}, {% endif %}
+                        {% endfor %}
+                    </p>
+                </div>
+            {% endif %}
+        </div>
+    </div>
+    {% endif %}
+    
+    {% if available_capacities %}
+    <div class="panel-section">
+        <div class="option-title need-fw-option">Capacity</div>
+        
+        <div class="capacity-options">
+            {% for capacity in available_capacities %}
+                <div class="capacity-option {% if forloop.first %}selected{% endif %}" 
+                    data-capacity="{{ capacity.capacity.volume }}" 
+                    data-capacity-id="{{ capacity.capacity.id }}"
+                    data-price="{{ capacity.price }}">
+                    <svg class="capacity-star" width="16" height="16" viewBox="0 0 24 24">
+                        {% if forloop.first %}
+                            <path fill="currentColor" d="M12 17.27L18.18 21l-1.64-7.03L22 9.24l-7.19-.61L12 2 9.19 8.63 2 9.24l5.46 4.73L5.82 21z"/>
+                        {% else %}
+                            <path fill="currentColor" d="M22 9.24l-7.19-.62L12 2 9.19 8.63 2 9.24l5.46 4.73L5.82 21 12 17.27 18.18 21l-1.63-7.03L22 9.24zM12 15.4l-3.76 2.27 1-4.28-3.32-2.88 4.38-.38L12 6.1l1.71 4.04 4.38.38-3.32 2.88 1 4.28L12 15.4z"/>
+                        {% endif %}
+                    </svg>
+                    <span class="capacity-value">{{ capacity.capacity.volume }}</span>
+                </div>
+            {% endfor %}
+        </div>
+    </div>
+    {% endif %}
+    
+    <div class="panel-section">
+        {% if is_available %}
+            <button class="btn btn-cart" id="addToCartBtn" 
+                    hx-post="{% url 'cart:cart_add' perfume.id %}" 
+                    hx-target="#cartModalContent" 
+                    hx-swap="innerHTML"
+                    hx-vals='{"quantity": "1"}'
+                    hx-on::after-request="document.getElementById('cartModal').classList.add('active'); document.body.style.overflow = 'hidden';">
+                ADD TO CART
+                <button class="wishlist-btn">
+                    <i class="far fa-heart"></i>
+                </button>
+            </button>
+        {% else %}
+            <button class="btn btn-sold-out" disabled>SOLD OUT</button>
+            <button class="btn btn-notify" data-product="{{ perfume.id }}">
+                NOTIFY ME WHEN AVAILABLE
+            </button>
+        {% endif %}
+    </div>
+</div>
+
+<div class="container-fluid container-fluid-detail-on-card">
+    <div class="row row-detail-on-card">
+        <div class="col-lg-6 content-col-detail-on-card">
+            <h1 class="heading-detail-on-card fade-in-detail-on-card text-uppercase titles-cinzel need-width">
+                {% if perfume.olfactory_family %}
+                    {{ perfume.olfactory_family.name|safe }}
+                {% endif %}
+            </h1>
+            
+            <p class="description-detail-on-card fade-in-detail-on-card delay-1-detail-on-card need-width">
+                {{ perfume.olfactory_family.description|safe }}
+            </p>
+            
+            {% if perfume.top_notes.exists or perfume.middle_notes.exists or perfume.base_notes.exists %}
+            <div class="notes-section-detail-on-card fade-in-detail-on-card delay-2-detail-on-card need-width">
+                <div class="section-label-detail-on-card">NOTES</div>
+                
+                {% if perfume.top_notes.exists %}
+                <div class="accordion-item-detail-on-card">
+                    <div class="accordion-header-detail-on-card" data-target="top-notes">
+                        <div class="accordion-title-detail-on-card titles-cinzel">TOP</div>
+                        <div class="accordion-icon-detail-on-card">+</div>
+                    </div>
+                    <div class="accordion-content-detail-on-card" id="top-notes">
+                        <p>
+                            {% for note in perfume.top_notes.all %}
+                                {{ note.name|safe }}{% if not forloop.last %}, {% endif %}
+                            {% endfor %}
+                        </p>
+                    </div>
+                </div>
+                {% endif %}
+                
+                {% if perfume.middle_notes.exists %}
+                <div class="accordion-item-detail-on-card">
+                    <div class="accordion-header-detail-on-card" data-target="middle-notes">
+                        <div class="accordion-title-detail-on-card titles-cinzel">MIDDLE</div>
+                        <div class="accordion-icon-detail-on-card">+</div>
+                    </div>
+                    <div class="accordion-content-detail-on-card" id="middle-notes">
+                        <p>
+                            {% for note in perfume.middle_notes.all %}
+                                {{ note.name|safe }}{% if not forloop.last %}, {% endif %}
+                            {% endfor %}
+                        </p>
+                    </div>
+                </div>
+                {% endif %}
+                
+                {% if perfume.base_notes.exists %}
+                <div class="accordion-item-detail-on-card">
+                    <div class="accordion-header-detail-on-card" data-target="base-notes">
+                        <div class="accordion-title-detail-on-card titles-cinzel">BASE</div>
+                        <div class="accordion-icon-detail-on-card">+</div>
+                    </div>
+                    <div class="accordion-content-detail-on-card" id="base-notes">
+                        <p>
+                            {% for note in perfume.base_notes.all %}
+                                {{ note.name|safe }}{% if not forloop.last %}, {% endif %}
+                            {% endfor %}
+                        </p>
+                    </div>
+                </div>
+                {% endif %}
+            </div>
+            {% endif %}
+            
+            <div class="accordion-item-detail-on-card fade-in-detail-on-card delay-3-detail-on-card need-width">
+                <div class="accordion-header-detail-on-card" data-target="ingredients">
+                    <div class="accordion-title-detail-on-card ingredients titles-cinzel">INGREDIENTS</div>
+                    <div class="accordion-icon-detail-on-card">+</div>
+                </div>
+                <div class="accordion-content-detail-on-card" id="ingredients">
+                    {% if perfume.olfactory_family and perfume.olfactory_family.ingredients.exists %}
+                        <p>
+                            {% for ingredient in perfume.olfactory_family.ingredients.all %}
+                                {{ ingredient.name|safe }}{% if not forloop.last %}, {% endif %}
+                            {% endfor %}
+                        </p>
+                    {% else %}
+                        <p>Alcohol Denat., Aqua (Water), Parfum (Fragrance), Limonene, Linalool, Coumarin, Citral, Geraniol, Citronellol, Eugenol, Benzyl Benzoate, Farnesol, Benzyl Alcohol, Benzyl Salicylate, Cinnamal.</p>
+                    {% endif %}
+                    <p>Crafted with the finest natural ingredients, sourced ethically and sustainably.</p>
+                </div>
+            </div>
+        </div>
+        
+        <div class="col-lg-6 image-col-detail-on-card">
+            <div class="image-container-detail-on-card">
+                {% if perfume.detail_media %}
+                    {% if perfume.detail_media.name|lower|slice:"-4:" in ".mp4,.mov,.webm" %}
+                        <video class="product-image-detail-on-card" autoplay muted loop playsinline>
+                            <source src="{{ perfume.detail_media.url }}" type="video/mp4">
+                            Your browser does not support the video tag.
+                        </video>
+                    {% else %}
+                        <img src="{{ perfume.detail_media.url }}" alt="{{ perfume.name|safe }}" class="product-image-detail-on-card">
+                    {% endif %}
+                {% else %}
+                    <img src="{{ perfume.image.url }}" alt="{{ perfume.name|safe }}" class="product-image-detail-on-card">
+                {% endif %}
+            </div>
+        </div>
+    </div>
+</div>
+
+<script>
+    document.addEventListener('DOMContentLoaded', function() {
+        // Gallery functionality
+        const galleryImages = document.querySelectorAll('.gallery-image');
+        const prevBtn = document.getElementById('prevBtn');
+        const nextBtn = document.getElementById('nextBtn');
+        const galleryDots = document.querySelectorAll('.gallery-dot');
+        let currentImageIndex = 0;
+        let isAnimating = false; // Флаг для предотвращения множественных анимаций
+
+        function fadeImage(element, startOpacity, endOpacity, duration, callback) {
+            let start = null;
+            element.style.opacity = startOpacity;
+
+            function animate(timestamp) {
+                if (!start) start = timestamp;
+                const progress = (timestamp - start) / duration;
+                const easedProgress = progress < 0.5 
+                    ? 2 * progress * progress 
+                    : 1 - Math.pow(-2 * progress + 2, 2) / 2; // Ease-in-out
+                const currentOpacity = startOpacity + (endOpacity - startOpacity) * easedProgress;
+
+                element.style.opacity = currentOpacity;
+
+                if (progress < 1) {
+                    requestAnimationFrame(animate);
+                } else {
+                    element.style.opacity = endOpacity;
+                    if (callback) callback();
+                }
+            }
+
+            requestAnimationFrame(animate);
+        }
+
+        function updateGalleryImage(index) {
+            if (galleryImages.length <= 1 || isAnimating || index === currentImageIndex) return;
+
+            isAnimating = true;
+
+            const currentImage = galleryImages[currentImageIndex];
+            const nextImage = galleryImages[index];
+
+            // Скрываем текущее изображение
+            fadeImage(currentImage, 1, 0, 300, () => {
+                // Показываем следующее изображение
+                fadeImage(nextImage, 0, 1, 300, () => {
+                    // Обновляем классы и индекс
+                    galleryImages.forEach(img => img.classList.remove('active'));
+                    nextImage.classList.add('active');
+
+                    galleryDots.forEach(dot => dot.classList.remove('active'));
+                    galleryDots[index].classList.add('active');
+
+                    currentImageIndex = index;
+                    isAnimating = false;
+                });
+            });
+        }
+
+        if (prevBtn) {
+            prevBtn.addEventListener('click', function() {
+                const newIndex = (currentImageIndex - 1 + galleryImages.length) % galleryImages.length;
+                updateGalleryImage(newIndex);
+            });
+        }
+
+        if (nextBtn) {
+            nextBtn.addEventListener('click', function() {
+                const newIndex = (currentImageIndex + 1) % galleryImages.length;
+                updateGalleryImage(newIndex);
+            });
+        }
+
+        if (galleryDots.length > 0) {
+            galleryDots.forEach(dot => {
+                dot.addEventListener('click', function() {
+                    const index = parseInt(this.getAttribute('data-index'));
+                    updateGalleryImage(index);
+                });
+            });
+        }
+
+        // Capacity selection
+        const capacityOptions = document.querySelectorAll('.capacity-option');
+        let selectedPrice = '{{ perfume.get_price_with_discount }}';
+        const addToCartBtn = document.getElementById('addToCartBtn');
+
+        if (capacityOptions.length > 0) {
+            // Устанавливаем начальные значения для первого элемента
+            const firstOption = capacityOptions[0];
+            firstOption.classList.add('selected');
+            const firstStar = firstOption.querySelector('.capacity-star');
+            firstStar.innerHTML = `<path fill="currentColor" d="M12 17.27L18.18 21l-1.64-7.03L22 9.24l-7.19-.61L12 2 9.19 8.63 2 9.24l5.46 4.73L5.82 21z"/>`;
+            selectedPrice = firstOption.getAttribute('data-price');
+            document.querySelector('.product-price-detail').innerHTML = '€' + selectedPrice;
+
+            // Обновляем hx-vals с начальным capacity_id
+            const initialCapacityId = firstOption.getAttribute('data-capacity-id');
+            if (addToCartBtn) {
+                addToCartBtn.setAttribute('hx-vals', JSON.stringify({
+                    quantity: "1",
+                    capacity: initialCapacityId
+                }));
+            }
+
+            capacityOptions.forEach(option => {
+                option.addEventListener('click', function() {
+                    // Удаляем класс selected у всех опций
+                    capacityOptions.forEach(opt => {
+                        opt.classList.remove('selected');
+                        const star = opt.querySelector('.capacity-star');
+                        star.innerHTML = `<path fill="currentColor" d="M22 9.24l-7.19-.62L12 2 9.19 8.63 2 9.24l5.46 4.73L5.82 21 12 17.27 18.18 21l-1.63-7.03L22 9.24zM12 15.4l-3.76 2.27 1-4.28-3.32-2.88 4.38-.38L12 6.1l1.71 4.04 4.38.38-3.32 2.88 1 4.28L12 15.4z"/>`;
+                    });
+
+                    // Добавляем класс selected к выбранной опции
+                    this.classList.add('selected');
+                    const star = this.querySelector('.capacity-star');
+                    star.innerHTML = `<path fill="currentColor" d="M12 17.27L18.18 21l-1.64-7.03L22 9.24l-7.19-.61L12 2 9.19 8.63 2 9.24l5.46 4.73L5.82 21z"/>`;
+
+                    // Обновляем цену
+                    selectedPrice = this.getAttribute('data-price');
+                    document.querySelector('.product-price-detail').innerHTML = '€' + selectedPrice;
+
+                    // Обновляем hx-vals с новым capacity_id
+                    const capacityId = this.getAttribute('data-capacity-id');
+                    if (addToCartBtn) {
+                        addToCartBtn.setAttribute('hx-vals', JSON.stringify({
+                            quantity: "1",
+                            capacity: capacityId
+                        }));
+                    }
+                });
+            });
+        } else {
+            // Если нет ёмкостей, отключаем кнопку добавления в корзину
+            if (addToCartBtn) {
+                addToCartBtn.disabled = true;
+                addToCartBtn.textContent = 'SELECT CAPACITY REQUIRED';
+            }
+        }
+
+        // Olfactory toggle with animation
+        const olfactoryToggle = document.getElementById('olfactoryToggle');
+        if (olfactoryToggle) {
+            let isExpanded = false;
+            
+            olfactoryToggle.addEventListener('click', function() {
+                isExpanded = !isExpanded;
+                
+                this.innerHTML = isExpanded ? '<i class="fas fa-minus"></i>' : '<i class="fas fa-plus"></i>';
+                
+                const notesSection = document.querySelector('.olfactory-notes');
+                if (notesSection) {
+                    if (isExpanded) {
+                        // Показываем с анимацией
+                        notesSection.style.display = 'block';
+                        notesSection.style.opacity = '0';
+                        notesSection.style.maxHeight = '0';
+                        
+                        // Вычисляем полную высоту содержимого
+                        const scrollHeight = notesSection.scrollHeight;
+                        
+                        // Анимация прозрачности и высоты
+                        let start = null;
+                        function animate(timestamp) {
+                            if (!start) start = timestamp;
+                            const progress = (timestamp - start) / 300; // 300ms анимация
+                            const easedProgress = progress < 0.5 
+                                ? 2 * progress * progress 
+                                : 1 - Math.pow(-2 * progress + 2, 2) / 2; // Ease-in-out
+                            
+                            notesSection.style.opacity = easedProgress;
+                            notesSection.style.maxHeight = (easedProgress * scrollHeight) + 'px';
+                            
+                            if (progress < 1) {
+                                requestAnimationFrame(animate);
+                            } else {
+                                notesSection.style.opacity = '1';
+                                notesSection.style.maxHeight = scrollHeight + 'px';
+                            }
+                        }
+                        requestAnimationFrame(animate);
+                    } else {
+                        // Скрываем с анимацией
+                        let start = null;
+                        function animate(timestamp) {
+                            if (!start) start = timestamp;
+                            const progress = (timestamp - start) / 300; // 300ms анимация
+                            const easedProgress = progress < 0.5 
+                                ? 2 * progress * progress 
+                                : 1 - Math.pow(-2 * progress + 2, 2) / 2; // Ease-in-out
+                            
+                            notesSection.style.opacity = 1 - easedProgress;
+                            notesSection.style.maxHeight = ((1 - easedProgress) * notesSection.scrollHeight) + 'px';
+                            
+                            if (progress < 1) {
+                                requestAnimationFrame(animate);
+                            } else {
+                                notesSection.style.opacity = '0';
+                                notesSection.style.maxHeight = '0';
+                                notesSection.style.display = 'none';
+                            }
+                        }
+                        requestAnimationFrame(animate);
+                    }
+                }
+            });
+        }
+        
+        // Notify when available
+        const notifyBtn = document.querySelector('.btn-notify');
+        if (notifyBtn) {
+            notifyBtn.addEventListener('click', function() {
+                const productId = this.getAttribute('data-product');
+                const originalText = this.textContent;
+                this.textContent = 'YOU WILL BE NOTIFIED';
+                setTimeout(() => {
+                    this.textContent = originalText;
+                }, 2000);
+            });
+        }
+        
+        // Wishlist functionality
+        const wishlistBtn = document.querySelector('.wishlist-btn');
+        if (wishlistBtn) {
+            let isInWishlist = false;
+            
+            wishlistBtn.addEventListener('click', function(e) {
+                e.stopPropagation();
+                isInWishlist = !isInWishlist;
+                this.innerHTML = isInWishlist ? '<i class="fas fa-heart"></i>' : '<i class="far fa-heart"></i>';
+            });
+        }
+        
+        // Accordion animation
+        const accordionHeaders = document.querySelectorAll('.accordion-header-detail-on-card');
+        accordionHeaders.forEach(header => {
+            header.addEventListener('click', function() {
+                const targetId = this.getAttribute('data-target');
+                const content = document.getElementById(targetId);
+                const isActive = content.classList.contains('active-detail-on-card');
+                
+                if (isActive) {
+                    content.classList.remove('active-detail-on-card');
+                    content.style.maxHeight = 0;
+                } else {
+                    content.classList.add('active-detail-on-card');
+                    content.style.maxHeight = content.scrollHeight + 'px';
+                }
+            });
+        });
+    });
+</script>
+
+{% endblock content %}

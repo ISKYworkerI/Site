@@ -1,0 +1,107 @@
+{% if cart and cart|length > 0 %}
+    <!-- Шаблон для заполненной корзины -->
+    <div class="main-cart-sec">
+        <div class="header-cart-sec">
+            <h1 class="title-cart-sec titles-cinzel">YOUR CART</h1>
+            <button class="close-cart-sec">×</button>
+        </div>
+        
+        <div class="cart-items-container" id="cartModalContent" hx-swap="innerHTML">
+            {% for item in cart %}
+            <div class="item-cart-sec" data-item-id="{% if item.type == 'product' %}{{ item.perfume.id }}{% elif item.type == 'sample' %}{{ item.sample.id }}{% else %}{{ item.gift.id }}{% endif %}" data-capacity-id="{% if item.type == 'product' %}{{ item.capacity.id }}{% endif %}">
+                <div class="image-cart-sec">
+                    {% if item.type == 'product' %}
+                        <img src="{{ item.perfume.image.url }}" alt="{{ item.perfume.name|safe }}">
+                    {% elif item.type == 'sample' %}
+                        <img src="{{ item.sample.image.url }}" alt="{{ item.sample.name|safe }}">
+                    {% else %}
+                        <img src="{{ item.gift.image.url }}" alt="{{ item.gift.name|safe }}">
+                    {% endif %}
+                </div>
+                <div class="details-cart-sec">
+                    {% if item.type == 'product' %}
+                        <h2 class="name-cart-sec titles-cinzel">{{ item.perfume.name|safe }}</h2>
+                        <p class="price-cart-sec">€{{ item.price }}</p>
+                        <p class="capacity-cart-sec">Capacity: {{ item.capacity.volume }}</p>
+                        <div class="quantity-cart-sec">
+                            <form method="POST" action="{% url 'cart:cart_update_quantity' item.perfume.id item.capacity.id %}" 
+                                hx-post="{% url 'cart:cart_update_quantity' item.perfume.id item.capacity.id %}" 
+                                hx-target="#cartModalContent"
+                                hx-swap="innerHTML"
+                                hx-vals='{"is_modal": "true"}' class="form-need-fl">
+                                {% csrf_token %}
+                                <button type="submit" name="quantity" value="{{ item.quantity|add:'-1' }}" class="quantity-btn-cart-sec decrease-cart-sec">−</button>
+                                <input type="text" class="quantity-input-cart-sec" value="{{ item.quantity }}" readonly>
+                                <button type="submit" name="quantity" value="{{ item.quantity|add:'1' }}" class="quantity-btn-cart-sec increase-cart-sec">+</button>
+                            </form>
+                        </div>
+                    {% elif item.type == 'sample' %}
+                        <h2 class="name-cart-sec titles-cinzel">{{ item.sample.name|safe }} (SAMPLE)</h2>
+                        <p class="price-cart-sec">€0</p>
+                    {% else %}
+                        <h2 class="name-cart-sec titles-cinzel">{{ item.gift.name|safe }} (GIFT WRAP)</h2>
+                        <p class="price-cart-sec">€{{ item.gift.price }}</p>
+                    {% endif %}
+                </div>
+                <form method="POST" action="{% if item.type == 'product' %}{% url 'cart:cart_remove' item.perfume.id item.capacity.id %}{% elif item.type == 'sample' %}{% url 'cart:cart_remove_sample' item.sample.id %}{% else %}{% url 'cart:cart_remove_gift' %}{% endif %}" 
+                    hx-post="{% if item.type == 'product' %}{% url 'cart:cart_remove' item.perfume.id item.capacity.id %}{% elif item.type == 'sample' %}{% url 'cart:cart_remove_sample' item.sample.id %}{% else %}{% url 'cart:cart_remove_gift' %}{% endif %}" 
+                    hx-target="#cartModalContent"
+                    hx-swap="innerHTML"
+                    hx-vals='{"is_modal": "true"}'>
+                    {% csrf_token %}
+                    <button type="submit" class="remove-cart-sec">×</button>
+                </form>
+            </div>
+            {% empty %}
+            <div class="empty-cart-message">
+                Your cart is empty
+            </div>
+            {% endfor %}
+        </div>
+        
+        <div class="summary-cart-sec">
+            <div class="subtotal-cart-sec">
+                <span class="subtotal-text">Subtotal</span>
+                <span class="subtotal-text">€{{ total_price }}</span>
+            </div>
+            <p class="shipping-cart-sec">
+                {% if total_price >= 100 %}
+                You have obtained free shipping!
+                {% else %}
+                Free shipping for orders over €100
+                {% endif %}
+            </p>
+            <p class="tax-cart-sec">Tax included and shipping calculated at checkout</p>
+            <a href="{% url 'cart:cart_detail' %}" class="checkout-cart-sec">View Cart</a>
+        </div>
+    </div>
+{% else %}
+    <!-- Шаблон для пустой корзины -->
+    <div class="main-cart-empty">
+        <div class="header-cart-sec">
+            <h1 class="title-cart-sec titles-cinzel">YOUR CART</h1>
+            <button class="close-cart-sec">×</button>
+        </div>
+        
+        <div class="content-cart-empty">
+            <h1 class="title-cart-empty titles-cinzel">YOUR CART IS EMPTY</h1>
+            <button class="continue-cart-empty">Continue shopping</button>
+            
+            <div class="account-section-cart-empty">
+                <h2 class="account-title-empty-cart titles-cinzel">HAVE AN ACCOUNT?</h2>
+                <p class="login-text-cart-empty">
+                    <a href="#" class="login-link-cart-empty">Log in</a> to check out faster.
+                </p>
+            </div>
+        </div>
+        
+        <div class="summary-cart-empty">
+            <div class="subtotal-cart-empty">
+                <span class="subtotal-text">Subtotal</span>
+                <span class="subtotal-text">€0</span>
+            </div>
+            <p class="tax-cart-empty">Tax included and shipping calculated at checkout</p>
+            <a href="{% url 'cart:cart_detail' %}" class="checkout-cart-empty">Cart</a>
+        </div>
+    </div>
+{% endif %}

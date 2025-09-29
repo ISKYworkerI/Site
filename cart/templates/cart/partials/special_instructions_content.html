@@ -1,0 +1,8 @@
+<form method="POST" hx-post="{% url 'cart:cart_detail' %}" hx-target="#specialInstructionsContent" hx-swap="innerHTML">
+    {% csrf_token %}
+    <textarea name="special_instructions" class="form-control text-inst" rows="3" placeholder="Add any special instructions for your order here">{{ special_instructions }}</textarea>
+    <button type="submit" class="btn-save-instructions">Save</button>
+</form>
+{% if special_instructions %}
+    <p class="saved-instructions">Saved instructions: {{ special_instructions }}</p>
+{% endif %}

@@ -1,0 +1,61 @@
+<div id="cart-items-container">
+    {% for item in cart %}
+    <div class="item-cart-page" id="cart-item-{{ item.key }}">
+        <div class="cart-group d-flex align-items-center">
+            <div class="item-image-cart-page">
+                {% if item.type == 'product' %}
+                    <img src="{{ item.perfume.image.url }}" alt="{{ item.perfume.name }}">
+                {% elif item.type == 'sample' %}
+                    <img src="{{ item.sample.image.url }}" alt="{{ item.sample.name }}">
+                {% else %}
+                    <img src="{{ item.gift.image.url }}" alt="{{ item.gift.name }}">
+                {% endif %}
+            </div>
+            <div class="item-details-cart-page">
+                {% if item.type == 'product' %}
+                    <h2 class="item-name-cart-page titles-cinzel">{{ item.perfume.name|upper }}</h2>
+                    {% if item.capacity %}
+                    <p class="item-capacity-cart-page">Capacity: {{ item.capacity.volume }}</p>
+                    {% endif %}
+                {% elif item.type == 'sample' %}
+                    <h2 class="item-name-cart-page titles-cinzel">{{ item.sample.name|upper }} (SAMPLE)</h2>
+                {% else %}
+                    <h2 class="item-name-cart-page titles-cinzel">{{ item.gift.name|upper }} (GIFT WRAP)</h2>
+                {% endif %}
+            </div>
+        </div>
+        <div class="item-price-cart-page">€{{ item.total_price }}</div>
+        {% if item.type == 'product' %}
+        <div class="quantity-cart-page">
+            <form method="POST" action="{% url 'cart:cart_update_quantity' item.perfume.id item.capacity.id %}" 
+                  hx-post="{% url 'cart:cart_update_quantity' item.perfume.id item.capacity.id %}" 
+                  hx-target="#cart-item-{{ item.key }}" 
+                  hx-swap="outerHTML">
+                {% csrf_token %}
+                <button type="submit" name="quantity" value="{{ item.quantity|add:'-1' }}" class="quantity-btn-cart-page decrease-cart-page">−</button>
+                <input type="text" class="quantity-input-cart-page" value="{{ item.quantity }}" readonly>
+                <button type="submit" name="quantity" value="{{ item.quantity|add:'1' }}" class="quantity-btn-cart-page increase-cart-page">+</button>
+            </form>
+        </div>
+        {% endif %}
+        <form method="POST" class="remove-mob" action="{% if item.type == 'product' %}{% url 'cart:cart_remove' item.perfume.id item.capacity.id %}{% elif item.type == 'sample' %}{% url 'cart:cart_remove_sample' item.sample.id %}{% else %}{% url 'cart:cart_remove_gift' %}{% endif %}" 
+              hx-post="{% if item.type == 'product' %}{% url 'cart:cart_remove' item.perfume.id item.capacity.id %}{% elif item.type == 'sample' %}{% url 'cart:cart_remove_sample' item.sample.id %}{% else %}{% url 'cart:cart_remove_gift' %}{% endif %}" 
+              hx-target="#cart-items-container" 
+              hx-swap="outerHTML">
+            {% csrf_token %}
+            <button type="submit" class="remove-cart-page">×</button>
+        </form>
+    </div>
+    {% empty %}
+    <div class="container-empty-cart">
+        <h1 class="title-empty-cart">YOUR CART IS EMPTY</h1>
+        
+        <a class="button-empty-cart" href="{% url 'main:catalog' %}" id="continue-shopping-empty-cart">Continue shopping</a>
+        
+        <h2 class="account-title-empty-cart">HAVE AN ACCOUNT?</h2>
+        <p class="login-text-empty-cart">
+            <a href="#" class="link-empty-cart">Log in</a> to check out faster.
+        </p>
+    </div>
+    {% endfor %}
+</div>

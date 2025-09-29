@@ -1,0 +1,702 @@
+{% load static %}
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+    <title>{% block title %}{% endblock title %}</title>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <link rel="stylesheet" href="{% static 'bootstrap/css/bootstrap.min.css' %}">
+    <link rel="stylesheet" href="{% static 'css/main.css' %}">
+    <script src="https://unpkg.com/htmx.org@1.9.10"></script>
+    <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
+    {% block script_add %}{% endblock script_add %}
+  </head>
+<body>
+  <header>
+    <a class="logo" href="{% url 'main:home' %}">
+      <img src="{% static 'img/logo.png' %}" alt="Santa Maria Novella Logo">
+    </a>
+    
+    <nav>
+      <button class="mobile-menu-btn" id="mobileMenuBtn">
+        <i class="fas fa-bars"></i>
+      </button>
+      
+      <ul class="nav-links">
+        <li class="item-nav-fr dropdown-nav-fr">
+          <a href="#" class="link-nav-fr" id="fragrancesDropdown">Fragrances</a>
+        </li>
+        {% for category in navigation_categories %}
+          <li class="item-nav-fr">
+            <a href="{% url 'main:catalog' %}?category={{ category.slug }}" class="link-nav-fr">{{ category.name }}</a>
+          </li>
+        {% endfor %}
+        <li class="item-nav-fr">
+          <a href="#" class="link-nav-fr">Our Story</a>
+        </li>
+      </ul>
+      
+      <div class="nav-icons">
+        <a href="#" aria-label="Search" class="search-toggle"><i class="fas fa-search"></i></a>
+        <a href="#" aria-label="Shopping Bag" id="cartBtn"><i class="fas fa-shopping-bag"></i></a>
+        {% if user.is_authenticated %}
+          <a href="{% url 'users:profile' %}" class="icon-nav-fr" aria-label="Profile"><i class="far fa-user"></i></a>
+        {% else %}
+          <a href="{% url 'users:login' %}" class="icon-nav-fr" aria-label="Log In"><i class="far fa-user"></i></a>
+        {% endif %}
+      </div>
+    </nav>
+
+    <!-- Форма поиска -->
+    <div class="search-overlay" id="searchOverlay">
+      <div class="container-search">
+        <form class="form-search" id="form-search">
+          <input 
+            type="text" 
+            class="input-search" 
+            id="input-search" 
+            placeholder="Search" 
+            aria-label="Search"
+            hx-get="{% url 'main:results' %}" 
+            hx-target="#search-results-container" 
+            hx-trigger="input changed delay:300ms"
+            name="q"
+          >
+          <button type="submit" class="button-search" aria-label="Search">
+            <i class="fas fa-search icon-search"></i>
+          </button>
+          <button type="button" class="clear-search" id="clear-search" aria-label="Clear search">
+            <i class="fas fa-times icon-search"></i>
+          </button>
+        </form>
+      </div>
+    </div>
+
+    <!-- Контейнер для результатов поиска -->
+    <div class="search-results-container" id="search-results-container"></div>
+  </header>
+
+  <!-- Fragrances Dropdown Menu -->
+  <div class="dropdown-menu-nav-fr" id="fragrancesMenu">
+    <div class="container-fluid">
+      <div class="d-flex gap-5 justify-content-center">
+        <div class="sec-on-header">
+          <div class="category-nav-fr">
+            <h5 class="title-nav-fr">CATEGORY</h5>
+            <ul class="list-nav-fr">
+              {% for category in fragrance_categories %}
+                <li class="item-dropdown-nav-fr">
+                  <a href="{% url 'main:catalog' %}?category={{ category.slug }}" class="link-dropdown-nav-fr">{{ category.name }}</a>
+                </li>
+              {% empty %}
+                <li class="item-dropdown-nav-fr">No categories available</li>
+              {% endfor %}
+            </ul>
+          </div>
+        </div>
+        
+        <div class="sec-on-header">
+          <div class="olfactory-nav-fr">
+            <h5 class="title-nav-fr">OLFACTORY FAMILY</h5>
+            <ul class="list-nav-fr">
+              {% for family in olfactory_families %}
+                <li class="item-dropdown-nav-fr">
+                  <a href="{% url 'main:catalog' %}?olfactory_family={{ family.id }}" class="link-dropdown-nav-fr">{{ family.name }}</a>
+                </li>
+              {% empty %}
+                <li class="item-dropdown-nav-fr">No families available</li>
+              {% endfor %}
+            </ul>
+          </div>
+        </div>
+        
+        <div class="sec-on-header">
+          <div class="ingredients-nav-fr">
+            <h5 class="title-nav-fr">INGREDIENTS</h5>
+            <ul class="list-nav-fr">
+              {% for ingredient in fragrance_ingredients %}
+                <li class="item-dropdown-nav-fr">
+                  <a href="{% url 'main:catalog' %}?ingredient={{ ingredient.id }}" class="link-dropdown-nav-fr">{{ ingredient.name }}</a>
+                </li>
+              {% empty %}
+                <li class="item-dropdown-nav-fr">No ingredients available</li>
+              {% endfor %}
+            </ul>
+          </div>
+        </div>
+        
+        <div class="sec-on-header">
+          <div class="bestseller-nav-fr">
+            <div class="image-container-nav-fr">
+              <img src="{% static 'img/sel.jpg' %}" alt="Best Seller Fragrances" class="img-fluid">
+            </div>
+            <h5 class="title-nav-fr mt-3">BEST SELLER</h5>
+            <a href="/catalog/?category=eau-de-cologne" class="discover-nav-fr">DISCOVER MORE</a>
+          </div>
+        </div>
+      </div>
+      
+      <div class="close-container-nav-fr">
+        <button class="close-nav-fr" id="closeMenu">Close menu <i class="fas fa-times"></i></button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Mobile Menu -->
+  <div class="container-mobile-nav" id="mobileMenu">
+    <div class="header-mobile-nav">
+      <div class="header-left-mobile-nav">
+        <button class="hamburger-mobile-nav" id="hamburgerMenuBtn">
+          <span class="hamburger-line-mobile-nav"></span>
+          <span class="hamburger-line-mobile-nav"></span>
+          <span class="hamburger-line-mobile-nav"></span>
+        </button>
+        <button class="heart-mobile-nav">
+          <i class="far fa-heart"></i>
+        </button>
+      </div>
+      <div class="logo-mobile-nav">
+        <div class="logo-text-mobile-nav">
+          <div class="logo-title-mobile-nav">Officina Profumo-Farmaceutica</div>
+          <div class="logo-subtitle-mobile-nav">Santa Maria Novella</div>
+        </div>
+      </div>
+      <div class="header-right-mobile-nav">
+        <button class="search-mobile-nav search-toggle">
+          <i class="fas fa-search"></i>
+        </button>
+        <button class="cart-mobile-nav" id="cartBtn">
+          <i class="fas fa-shopping-bag"></i>
+          <span class="cart-count-mobile-nav">0</span>
+        </button>
+      </div>
+    </div>
+
+    <div class="menu-content-mobile-nav">
+      <nav class="nav-mobile-nav">
+        <ul class="nav-list-mobile-nav">
+          <li class="nav-item-mobile-nav">
+            <button class="mobile-submenu-toggle" id="fragrancesSubmenuToggle">
+              Fragrances <i class="fas fa-chevron-down"></i>
+            </button>
+            <div class="mobile-submenu" id="fragrancesSubmenu">
+              <div class="mobile-submenu-section">
+                <h5 class="mobile-submenu-title">CATEGORY</h5>
+                <ul class="mobile-submenu-list">
+                  {% for category in fragrance_categories %}
+                    <li class="mobile-submenu-item">
+                      <a href="{% url 'main:catalog' %}?category={{ category.slug }}" class="mobile-submenu-link">{{ category.name }}</a>
+                    </li>
+                  {% empty %}
+                    <li class="mobile-submenu-item">No categories available</li>
+                  {% endfor %}
+                </ul>
+              </div>
+              <div class="mobile-submenu-section">
+                <h5 class="mobile-submenu-title">OLFACTORY FAMILY</h5>
+                <ul class="mobile-submenu-list">
+                  {% for family in olfactory_families %}
+                    <li class="mobile-submenu-item">
+                      <a href="{% url 'main:catalog' %}?olfactory_family={{ family.id }}" class="mobile-submenu-link">{{ family.name }}</a>
+                    </li>
+                  {% empty %}
+                    <li class="mobile-submenu-item">No families available</li>
+                  {% endfor %}
+                </ul>
+              </div>
+              <div class="mobile-submenu-section">
+                <h5 class="mobile-submenu-title">INGREDIENTS</h5>
+                <ul class="mobile-submenu-list">
+                  {% for ingredient in fragrance_ingredients %}
+                    <li class="mobile-submenu-item">
+                      <a href="{% url 'main:catalog' %}?ingredient={{ ingredient.id }}" class="mobile-submenu-link">{{ ingredient.name }}</a>
+                    </li>
+                  {% empty %}
+                    <li class="mobile-submenu-item">No ingredients available</li>
+                  {% endfor %}
+                </ul>
+              </div>
+              <div class="mobile-submenu-section">
+                <h5 class="mobile-submenu-title">BEST SELLER</h5>
+                <div class="mobile-bestseller">
+                  <img src="{% static 'img/sel.jpg' %}" alt="Best Seller Fragrances" class="mobile-bestseller-img">
+                  <a href="/catalog/?category=eau-de-cologne" class="mobile-submenu-link discover-link">DISCOVER MORE</a>
+                </div>
+              </div>
+            </div>
+          </li>
+          {% for category in navigation_categories %}
+            <li class="nav-item-mobile-nav">
+              <a href="{% url 'main:catalog' %}?category={{ category.slug }}" class="nav-link-mobile-nav">{{ category.name }}</a>
+            </li>
+          {% endfor %}
+          <li class="nav-item-mobile-nav">
+            <a href="#" class="nav-link-mobile-nav">Our Story</a>
+          </li>
+        </ul>
+      </nav>
+    </div>
+
+    <div class="footer-mobile-nav">
+      <div class="auth-mobile-nav">
+        {% if user.is_authenticated %}
+          <a href="{% url 'users:profile' %}" class="login-mobile-nav">Profile</a> / <a href="{% url 'users:logout' %}" class="register-mobile-nav">Logout</a>
+        {% else %}
+          <a href="{% url 'users:login' %}" class="login-mobile-nav">Login</a> / <a href="{% url 'users:register' %}" class="register-mobile-nav">Register</a>
+        {% endif %}
+      </div>
+    </div>
+
+    <div class="close-menu-mobile-nav">
+      <button class="close-button-mobile-nav" id="mobileMenuClose">
+        Close menu <i class="fas fa-times"></i>
+      </button>
+    </div>
+  </div>
+  
+  <!-- Отображение сообщений -->
+  {% if messages %}
+    <div class="messages">
+      {% for message in messages %}
+        <div class="alert {% if message.tags %}alert-{{ message.tags }}{% else %}alert-info{% endif %}">
+          {{ message }}
+        </div>
+      {% endfor %}
+    </div>
+  {% endif %}
+
+  {% block content %}
+  {% endblock content %}
+
+  <footer>
+    <div class="services-section">
+      <div class="container">
+        <div class="row">
+          <div class="col-md-6 col-lg">
+            <div class="service-item">
+              <div class="service-icon">
+                <i class="fas fa-box"></i>
+              </div>
+              <h3 class="service-title">FREE SHIPPING</h3>
+              <p class="service-text">We are pleased to offer free shipping for all EU orders of 100€.</p>
+            </div>
+          </div>
+          
+          <div class="col-md-6 col-lg">
+            <div class="service-item">
+              <div class="service-icon">
+                <i class="far fa-clock"></i>
+              </div>
+              <h3 class="service-title">DELIVERY TIME</h3>
+              <p class="service-text">Orders take approximately 24 to 48 business hours to complete and are processed Monday to Friday.</p>
+            </div>
+          </div>
+          
+          <div class="col-md-6 col-lg">
+            <div class="service-item">
+              <div class="service-icon">
+                <i class="fas fa-gift"></i>
+              </div>
+              <h3 class="service-title">GIFTING</h3>
+              <p class="service-text">Surprise your loved ones (or treat yourself!) with one of Officina's traditional gift boxes.</p>
+            </div>
+          </div>
+          
+          <div class="col-md-6 col-lg">
+            <div class="service-item">
+              <div class="service-icon">
+                <i class="fas fa-vial"></i>
+              </div>
+              <h3 class="service-title">FREE SAMPLES</h3>
+              <p class="service-text">Choose your favourite samples at checkout! Complimentary with every order.</p>
+            </div>
+          </div>
+          
+          <div class="col-md-6 col-lg">
+            <div class="service-item">
+              <div class="service-icon">
+                <i class="fas fa-headset"></i>
+              </div>
+              <h3 class="service-title">CUSTOMER CARE</h3>
+              <p class="service-text">Our advisors are ready to assist you from Monday to Friday.</p>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+    
+    <div class="links-section">
+      <div class="container">
+        <div class="row">
+          <div class="d-flex justify-content-between">
+            <a href="#" class="footer-link">READ THROUGH ALL THE DETAILS</a>
+            <a href="/catalog/?category=eau-de-cologne" class="footer-link">DISCOVER MORE</a>
+            <a href="#" class="footer-link">CONTACT US</a>
+          </div>
+        </div>
+      </div>
+    </div>
+    
+    <div class="footer-navigation">
+      <div class="containerr d-flex justify-content-between">
+        <div class="newsletter-section">
+          <div>
+            <div>
+              <div class="col-lg-6">
+                <h3>NEWSLETTER</h3>
+                <p class="newsletter-text">Subscribe to our newsletter to get to know more about the Officina Profumo-Farmaceutica di Santa Maria Novella news, events and products.</p>
+                <form class="newsletter-form" id="newsletterForm" method="POST" action="#">
+                  {% csrf_token %}
+                  <input type="email" name="email" class="newsletter-input" placeholder="Email" required>
+                  <button type="submit" class="newsletter-submit">
+                    <i class="fas fa-arrow-right"></i>
+                  </button>
+                </form>
+              </div>
+            </div>
+          </div>
+        </div>
+        <div class="row need-help-sec">
+          <div class="">
+            <h3 class="footer-nav-title">NEED HELP?</h3>
+            <ul class="footer-nav-list">
+              <li class="footer-nav-item">
+                {% if user.is_authenticated %}
+                  <a href="{% url 'users:profile' %}" class="footer-nav-link">My Account</a>
+                {% else %}
+                  <a href="{% url 'users:login' %}" class="footer-nav-link">Log In</a>
+                {% endif %}
+              </li>
+              <li class="footer-nav-item">
+                <a href="#" class="footer-nav-link">Our Story</a>
+              </li>
+              <li class="footer-nav-item">
+                <a href="#" class="footer-nav-link">Privacy Policy</a>
+              </li>
+            </ul>
+          </div>
+          
+        </div>
+      </div>
+    </div>
+    
+    <div class="language-social d-flex justify-content-between align-items-center">
+      <div class="copyright">
+        <div class="">
+          <div class="row">
+            <div class="col-12">
+              <div class="d-flex align-items-start for-mob-dir">
+                <img src="{% static 'img/logo.png' %}" alt="Santa Maria Novella Logo" class="copyright-logo">
+                <div class="copyright-text">
+                  {% if site_info %}
+                    {{ site_info.copyright_text|safe }}
+                  {% else %}
+                    © 2023, Officina Profumo Farmaceutica di Santa Maria Novella VAT IT00459370482<br>Company under coordination and control of Italmobiliare S.p.A.
+                  {% endif %}
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+      <div class="">
+        <div class="row">
+          <div class="col-md-6">
+            <div class="social-links">
+              <a href="{% if site_info and site_info.instagram_url %}{{ site_info.instagram_url }}{% else %}#{% endif %}" class="social-link" aria-label="Instagram">
+                <i class="fab fa-instagram"></i>
+              </a>
+              <a href="{% if site_info and site_info.linkedin_url %}{{ site_info.linkedin_url }}{% else %}#{% endif %}" class="social-link" aria-label="LinkedIn">
+                <i class="fab fa-linkedin-in"></i>
+              </a>
+              <a href="{% if site_info and site_info.pinterest_url %}{{ site_info.pinterest_url }}{% else %}#{% endif %}" class="social-link" aria-label="Pinterest">
+                <i class="fab fa-pinterest-p"></i>
+              </a>
+              <a href="{% if site_info and site_info.facebook_url %}{{ site_info.facebook_url }}{% else %}#{% endif %}" class="social-link" aria-label="Facebook">
+                <i class="fab fa-facebook-f"></i>
+              </a>
+              <a href="{% if site_info and site_info.twitter_url %}{{ site_info.twitter_url }}{% else %}#{% endif %}" class="social-link" aria-label="Twitter">
+                <i class="fab fa-twitter"></i>
+              </a>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </footer>
+  
+  <!-- Cart Modal -->
+  <div class="cart-modal" id="cartModal">
+    <div class="cart-modal-overlay" hx-get="{% url 'cart:cart_modal' %}" hx-target="#cartModalContent" hx-trigger="click"></div>
+    <div class="cart-modal-content" id="cartModalContent" hx-get="{% url 'cart:cart_modal' %}" hx-trigger="load">
+      <!-- Содержимое корзины будет загружаться через HTMX -->
+    </div>
+  </div>
+
+  <script src="{% static 'bootstrap/js/bootstrap.bundle.min.js' %}"></script>
+  <script src="{% static 'js/main.js' %}"></script>
+
+  <script>
+    document.addEventListener('DOMContentLoaded', function() {
+      // Получаем CSRF-токен из куки
+      function getCookie(name) {
+        let cookieValue = null;
+        if (document.cookie && document.cookie !== '') {
+          const cookies = document.cookie.split(';');
+          for (let i = 0; i < cookies.length; i++) {
+            const cookie = cookies[i].trim();
+            if (cookie.substring(0, name.length + 1) === (name + '=')) {
+              cookieValue = decodeURIComponent(cookie.substring(name.length + 1));
+              break;
+            }
+          }
+        }
+        return cookieValue;
+      }
+  
+      const csrftoken = getCookie('csrftoken');
+  
+      // Добавляем CSRF-токен в заголовки всех HTMX POST-запросов
+      document.body.addEventListener('htmx:configRequest', function(event) {
+        if (event.detail.verb.toUpperCase() === 'POST') {
+          event.detail.headers['X-CSRFToken'] = csrftoken;
+        }
+      });
+  
+      // Управление поиском
+      const searchToggle = document.querySelectorAll('.search-toggle');
+      const searchOverlay = document.querySelector('#searchOverlay');
+      const searchInput = document.querySelector('#input-search');
+      const clearSearch = document.querySelector('#clear-search');
+      const searchResultsContainer = document.querySelector('#search-results-container');
+      const navLinks = document.querySelector('.nav-links');
+      const navIcons = document.querySelector('.nav-icons');
+      const logo = document.querySelector('.logo');
+  
+      function toggleSearch() {
+        searchOverlay.classList.toggle('active');
+        if (searchOverlay.classList.contains('active')) {
+          searchInput.focus();
+          navLinks.style.display = 'none';
+          navIcons.style.display = 'none';
+          logo.style.display = 'none';
+        } else {
+          searchInput.value = '';
+          searchResultsContainer.innerHTML = '';
+          searchResultsContainer.classList.remove('active');
+          navLinks.style.display = '';
+          navIcons.style.display = '';
+          logo.style.display = '';
+        }
+      }
+  
+      searchToggle.forEach(toggle => {
+        toggle.addEventListener('click', function(e) {
+          e.preventDefault();
+          const mobileMenu = document.getElementById('mobileMenu');
+          if (mobileMenu.classList.contains('active')) {
+            toggleMobileMenu();
+          }
+          toggleSearch();
+        });
+      });
+  
+      clearSearch.addEventListener('click', function() {
+        searchInput.value = '';
+        searchResultsContainer.innerHTML = '';
+        searchResultsContainer.classList.remove('active');
+        toggleSearch();
+      });
+  
+      document.addEventListener('click', function(e) {
+        const isClickInsideSearch = searchOverlay.contains(e.target) || Array.from(searchToggle).some(toggle => toggle.contains(e.target));
+        const isClickInsideResults = searchResultsContainer.contains(e.target);
+        if (!isClickInsideSearch && !isClickInsideResults && searchOverlay.classList.contains('active')) {
+          toggleSearch();
+        }
+      });
+  
+      document.body.addEventListener('htmx:afterSwap', function(event) {
+        if (event.target.id === 'search-results-container') {
+          if (searchInput.value.trim() !== '') {
+            searchResultsContainer.classList.add('active');
+          } else {
+            searchResultsContainer.classList.remove('active');
+          }
+        }
+      });
+  
+      document.querySelector('#form-search').addEventListener('submit', function(e) {
+        e.preventDefault();
+      });
+  
+      // Cart modal functionality
+      const cartModal = document.getElementById('cartModal');
+      const cartBtn = document.querySelectorAll('#cartBtn');
+      const cartOverlay = document.querySelector('.cart-modal-overlay');
+  
+      function toggleCart() {
+        cartModal.classList.toggle('active');
+        document.body.style.overflow = cartModal.classList.contains('active') ? 'hidden' : '';
+        if (cartModal.classList.contains('active')) {
+          htmx.trigger('#cartModalContent', 'load');
+        }
+      }
+  
+      cartBtn.forEach(btn => {
+        btn.addEventListener('click', function(e) {
+          e.preventDefault();
+          const mobileMenu = document.getElementById('mobileMenu');
+          if (mobileMenu.classList.contains('active')) {
+            toggleMobileMenu();
+          }
+          toggleCart();
+        });
+      });
+  
+      if (cartOverlay) {
+        cartOverlay.addEventListener('click', toggleCart);
+      }
+  
+      document.body.addEventListener('htmx:afterSwap', function(event) {
+        if (event.target.id === 'cartModalContent') {
+          bindCartEvents();
+        }
+      });
+  
+      function bindCartEvents() {
+        const closeCartBtn = document.querySelector('.close-cart-sec');
+        const continueBtn = document.querySelector('.continue-cart-empty');
+  
+        if (closeCartBtn) {
+          closeCartBtn.addEventListener('click', toggleCart);
+        }
+        if (continueBtn) {
+          continueBtn.addEventListener('click', toggleCart);
+        }
+      }
+  
+      // Fragrances dropdown (desktop)
+      const fragrancesDropdown = document.getElementById('fragrancesDropdown');
+      const fragrancesMenu = document.getElementById('fragrancesMenu');
+      const closeMenu = document.getElementById('closeMenu');
+  
+      fragrancesDropdown.addEventListener('click', function(e) {
+        e.preventDefault();
+        fragrancesMenu.style.display = fragrancesMenu.style.display === 'block' ? 'none' : 'block';
+      });
+  
+      closeMenu.addEventListener('click', function() {
+        fragrancesMenu.style.display = 'none';
+      });
+  
+      document.addEventListener('click', function(e) {
+        const isClickInsideDropdown = fragrancesMenu.contains(e.target);
+        const isClickOnDropdownToggle = fragrancesDropdown.contains(e.target);
+        const isClickOnCloseButton = closeMenu.contains(e.target);
+        if (!isClickInsideDropdown && !isClickOnDropdownToggle && !isClickOnCloseButton) {
+          fragrancesMenu.style.display = 'none';
+        }
+      });
+  
+      fragrancesMenu.addEventListener('click', function(e) {
+        if (!closeMenu.contains(e.target)) {
+          e.stopPropagation();
+        }
+      });
+  
+      // Mobile menu
+      const mobileMenuBtn = document.getElementById('mobileMenuBtn');
+      const hamburgerMenuBtn = document.getElementById('hamburgerMenuBtn');
+      const mobileMenu = document.getElementById('mobileMenu');
+      const mobileMenuClose = document.getElementById('mobileMenuClose');
+      const fragrancesSubmenuToggle = document.getElementById('fragrancesSubmenuToggle');
+      const fragrancesSubmenu = document.getElementById('fragrancesSubmenu');
+  
+      function toggleMobileMenu() {
+        mobileMenu.classList.toggle('active');
+        document.body.style.overflow = mobileMenu.classList.contains('active') ? 'hidden' : '';
+        if (!mobileMenu.classList.contains('active') && fragrancesSubmenuToggle && fragrancesSubmenu) {
+          fragrancesSubmenu.style.display = 'none';
+          const icon = fragrancesSubmenuToggle.querySelector('i');
+          if (icon) {
+            icon.classList.remove('fa-chevron-up');
+            icon.classList.add('fa-chevron-down');
+          }
+        }
+      }
+  
+      function toggleFragrancesSubmenu() {
+        const isOpen = fragrancesSubmenu.style.display === 'block';
+        fragrancesSubmenu.style.display = isOpen ? 'none' : 'block';
+        const icon = fragrancesSubmenuToggle.querySelector('i');
+        icon.classList.toggle('fa-chevron-down', !isOpen);
+        icon.classList.toggle('fa-chevron-up', isOpen);
+      }
+  
+      if (mobileMenuBtn) {
+        mobileMenuBtn.addEventListener('click', function(e) {
+          e.preventDefault();
+          console.log('Mobile menu button clicked');
+          toggleMobileMenu();
+        });
+      }
+  
+      if (hamburgerMenuBtn) {
+        hamburgerMenuBtn.addEventListener('click', function(e) {
+          e.preventDefault();
+          console.log('Hamburger menu button clicked');
+          toggleMobileMenu();
+        });
+      }
+  
+      if (mobileMenuClose) {
+        mobileMenuClose.addEventListener('click', toggleMobileMenu);
+      }
+  
+      if (fragrancesSubmenuToggle) {
+        fragrancesSubmenuToggle.addEventListener('click', function(e) {
+          e.preventDefault();
+          toggleFragrancesSubmenu();
+        });
+      }
+  
+      // Закрытие меню при клике на ссылку
+      const mobileLinks = document.querySelectorAll('.nav-link-mobile-nav, .mobile-submenu-link');
+      mobileLinks.forEach(link => {
+        link.addEventListener('click', function() {
+          toggleMobileMenu();
+        });
+      });
+  
+      // Закрытие меню при клике вне его
+      document.addEventListener('click', function(e) {
+        const isClickInsideMenu = mobileMenu.contains(e.target) || mobileMenuBtn.contains(e.target) || hamburgerMenuBtn.contains(e.target);
+        if (!isClickInsideMenu && mobileMenu.classList.contains('active')) {
+          toggleMobileMenu();
+        }
+      });
+  
+      // Additional mobile menu interactions
+      const heartButton = document.querySelector('.heart-mobile-nav');
+      if (heartButton) {
+        heartButton.addEventListener('click', function(e) {
+          e.preventDefault();
+          console.log('Wishlist clicked');
+          // Add wishlist functionality here
+        });
+      }
+  
+      const languageSelector = document.querySelector('.language-mobile-nav');
+      if (languageSelector) {
+        languageSelector.addEventListener('click', function(e) {
+          e.preventDefault();
+          console.log('Language selector clicked');
+          // Add language selection functionality here
+        });
+      }
+    });
+  </script>
+</body>
+</html>

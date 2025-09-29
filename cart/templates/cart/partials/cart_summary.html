@@ -1,0 +1,30 @@
+{% load cart_filters %} 
+<div class="summary-cart-page" id="cart-summary">
+    <div class="subtotal-cart-page">
+        <span>Subtotal</span>
+        <span>€{{ discounted_price }}</span>
+    </div>
+    
+    {% if discount > 0 %}
+    <div class="discount-cart-page">
+        <span>Discount ({{ discount }}%)</span>
+        <span>-€{{ total_price|floatformat:2|subtract:discounted_price|floatformat:2 }}</span>
+    </div>
+    {% endif %}
+    
+    {% comment %} <form method="POST" class="promo-form-cart-page" hx-post="{% url 'cart:cart_detail' %}" hx-target="#cart-summary" hx-swap="outerHTML">
+        {% csrf_token %}
+        {{ promo_form.code }}
+        <button type="submit" class="apply-promo-btn">Apply</button>
+    </form> {% endcomment %}
+    
+    {% if promo_message %}
+    <div class="promo-message {% if 'Invalid' in promo_message %}error{% else %}success{% endif %}">
+        {{ promo_message }}
+    </div>
+    {% endif %}
+    
+    <a href="{% url 'orders:checkout' %}" class="checkout-btn-cart-page">Check out</a>
+    
+    <p class="tax-info-cart-page">Tax included and shipping calculated at checkout</p>
+</div>

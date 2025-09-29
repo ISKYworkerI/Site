@@ -1,0 +1,356 @@
+{% extends "main/base.html" %}
+{% load static %}
+
+{% block title %}Officina Profumo Santa Maria Novella{% endblock title %}
+
+{% block content %}
+  <main class="hero">
+    <div class="hero-content">
+      <a href="/catalog/?category=eau-de-cologne" class="discover-btn">DISCOVER MORE</a>
+      
+      <div class="hero-image">
+        <img src="{% static 'img/banner.jpg' %}" alt="ACQUA DELLA REGINA Perfume">
+      </div>
+      
+      <div class="herbs-left"></div>
+      <div class="herbs-right"></div>
+    </div>
+  </main>
+
+  <div class="essence-sec">
+    <div class="row product-section">
+      <!-- Product Description -->
+      <div class="row col-lg-4 fade-in">
+        <h1 class="main-title titles-cinzel">ACQUA DELLA REGINA. A TIMELESS ESSENCE.</h1>
+        <p class="history-text">
+          Created in <strong>1533</strong> by the perfumer Renato Bianco as a 
+          wedding gift for Caterina de' Medici, <strong>Acqua della Regina</strong> 
+          is our oldest fragrance and it still enchants us with its <strong>citrusy</strong> bouquet.
+        </p>
+        <a href="/catalog/?category=eau-de-cologne" class="btn btn-discover">DISCOVER MORE</a>
+        <div class="product-nav">
+          <i class="fas fa-arrow-left nav-arrow" id="prevBtn"></i>
+          <i class="fas fa-arrow-right nav-arrow" id="nextBtn"></i>
+        </div>
+      </div>
+      
+      <!-- Product Images -->
+      <div class="col-lg-8">
+        <div class="row neww">
+          {% for product in featured_products %}
+          <div class="col-md-4 product-card fade-in" 
+               style="animation-delay: {{ forloop.counter|add:"0.2" }}s;" 
+               data-url="{{ product.get_absolute_url }}"
+               data-product-id="{{ product.id }}">
+              <img src="{{ product.image.url }}" alt="{{ product.name }}" class="product-image">
+              <h3 class="product-title titles-cinzel">{{ product.name }}</h3>
+              <p class="product-price">€{{ product.get_price_with_discount }}</p>
+              <button class="btn btn-action choose-options" data-product="{{ product.id }}">CHOOSE OPTIONS</button>
+          </div>
+          {% endfor %}
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Hero Section -->
+  <div class="hero-index-sec">
+    <img src="{% static 'img/hero.jpg' %}" alt="L'Iris Perfume with Iris Flowers" class="hero-image-index-sec">
+    <div class="hero-zoom-index-sec" id="heroZoomBtn">
+      <i class="fas fa-plus"></i>
+    </div>
+
+    <div class="modal" id="productModal" tabindex="-1" aria-hidden="true">
+      <div class="modal-overlay modal-animation-overlay"></div>
+      <div class="modal-dialog">
+          <div class="modal-content modal-animation-content">
+              {% if hero_product %}
+              <div class="modal-header d-flex justify-content-between">
+                  <h5 class="modal-title">{{ hero_product.name }}</h5>
+                  <button type="button" class="modal-close" aria-label="Close">×</button>
+              </div>
+              <div class="modal-body">
+                  <img src="{{ hero_product.image.url }}" alt="{{ hero_product.name }}" class="img-fluid">
+                  <p class="price">€{{ hero_product.get_price_with_discount }}</p>
+              </div>
+              <div class="modal-footer">
+                  <a href="/perfume/liris/" class="btn btn-action">ADD TO CART</a>
+              </div>
+              {% endif %}
+          </div>
+      </div>
+    </div>
+  </div>
+  
+  <!-- Main Content -->
+  <div class="essence-sec">
+    <!-- Best Sellers Section -->
+    <h1 class="main-heading fade-in">OUR BEST SELLERS</h1>
+    
+    <!-- Navigation Arrows -->
+    <div class="collection-nav-index-sec fade-in-index-sec delay-1-index-sec">
+      <i class="fas fa-arrow-left nav-arrow-index-sec" id="prevBtn"></i>
+      <i class="fas fa-arrow-right nav-arrow-index-sec" id="nextBtn"></i>
+    </div>
+    
+    <!-- Filter Buttons -->
+    <div class="filter-container-index-sec fade-in-index-sec delay-1-index-sec">
+        <button class="filter-btn-index-sec active" data-filter="all">ALL PRODUCTS</button>
+        {% for category in filter_categories %}
+        <button class="filter-btn-index-sec" data-filter="{{ category.filter_slug|default:category.slug }}">
+            {{ category.filter_name|default:category.name|upper }}
+        </button>
+        {% endfor %}
+    </div>
+    
+    <div class="row product-grid-index-sec d-flex">
+        {% for product in best_sellers %}
+        <div class="col-md-4 product-card fade-in" 
+             style="animation-delay: {{ forloop.counter|add:"0.2" }}s;"
+             data-category="{{ product.category.filter_slug|default:product.category.slug }}"
+             data-url="{{ product.get_absolute_url }}"
+             data-product-id="{{ product.id }}">
+            <img src="{{ product.image.url }}" alt="{{ product.name }}" class="product-image">
+            <h3 class="product-title titles-cinzel">{{ product.name }}</h3>
+            <p class="product-price">€{{ product.get_price_with_discount }}</p>
+            <button class="btn btn-action choose-options" data-product="{{ product.id }}">CHOOSE OPTIONS</button>
+        </div>
+        {% endfor %}
+    </div>
+  </div>
+
+  <script>
+    const discoverBtn = document.querySelector('.btn-discover');
+    discoverBtn.addEventListener('click', function() {
+      window.scrollTo({
+        top: document.body.scrollHeight,
+        behavior: 'smooth'
+      });
+    });
+  </script>
+  <script>
+    
+    document.querySelectorAll('a[href^="#"]').forEach(anchor => {
+      anchor.addEventListener('click', function (e) {
+        e.preventDefault();
+        
+        document.querySelector(this.getAttribute('href')).scrollIntoView({
+          behavior: 'smooth'
+        });
+      });
+    });
+    
+    window.addEventListener('scroll', () => {
+      const scrollPosition = window.scrollY;
+      const heroImage = document.querySelector('.hero-image');
+      
+      if (scrollPosition < window.innerHeight) {
+        heroImage.style.transform = `translateY(${scrollPosition * 0.1}px)`;
+      }
+    });
+  </script>
+
+  <script>
+    document.addEventListener('DOMContentLoaded', function() {
+      // Новый скрипт для обработки кликов по карточкам
+      const productCards = document.querySelectorAll('.product-card');
+      
+      productCards.forEach(card => {
+        card.addEventListener('click', function(e) {
+          if (!e.target.closest('.choose-options')) {
+            const url = this.getAttribute('data-url');
+            if (url) {
+              window.location.href = url;
+            }
+          }
+        });
+      });
+
+      // Обработка кнопок CHOOSE OPTIONS (добавление в корзину)
+      const chooseOptionsButtons = document.querySelectorAll('.choose-options');
+      let cartCount = 0;
+      let cartItems = [];
+
+      chooseOptionsButtons.forEach(button => {
+        button.addEventListener('click', function(e) {
+          e.stopPropagation();
+          const productId = this.getAttribute('data-product');
+          const priceElement = this.closest('.product-card').querySelector('.product-price');
+          const price = priceElement ? priceElement.textContent.replace('€', '') : '0';
+
+          cartItems.push({
+            product: productId,
+            price: price,
+            quantity: 1
+          });
+
+          cartCount++;
+          console.log(`Added to cart: ${productId} - €${price}`);
+          console.log(`Cart now contains ${cartCount} items:`, cartItems);
+
+          const originalText = this.textContent;
+          this.textContent = 'ADDED TO CART';
+          this.style.backgroundColor = '#333';
+          this.style.color = '#fff';
+
+          setTimeout(() => {
+            this.textContent = originalText;
+            this.style.backgroundColor = 'transparent';
+            this.style.color = '#333';
+          }, 2000);
+        });
+      });
+
+      // Существующая логика для корзины
+      const addToCartButtons = document.querySelectorAll('.add-to-cart-index-sec');
+      
+      addToCartButtons.forEach(button => {
+        button.addEventListener('click', function() {
+          const product = this.getAttribute('data-product');
+          const price = this.getAttribute('data-price');
+          
+          cartItems.push({
+            product: product,
+            price: price,
+            quantity: 1
+          });
+          
+          cartCount++;
+          
+          const originalText = this.textContent;
+          this.textContent = 'ADDED TO CART';
+          this.style.backgroundColor = '#333';
+          this.style.color = '#fff';
+          
+          setTimeout(() => {
+            this.textContent = originalText;
+            this.style.backgroundColor = 'transparent';
+            this.style.color = '#333';
+          }, 2000);
+          
+          console.log(`Added to cart: ${product} - €${price}`);
+          console.log(`Cart now contains ${cartCount} items:`, cartItems);
+        });
+      });
+    
+      // Filter functionality
+      const filterButtons = document.querySelectorAll('.filter-btn-index-sec');
+      
+      filterButtons.forEach(button => {
+        button.addEventListener('click', function() {
+          filterButtons.forEach(btn => btn.classList.remove('active'));
+          this.classList.add('active');
+          
+          const filter = this.getAttribute('data-filter');
+          
+          productCards.forEach(card => {
+            if (filter === 'all') {
+              card.style.display = 'block';
+            } else {
+              const category = card.getAttribute('data-category');
+              if (category === filter) {
+                card.style.display = 'block';
+              } else {
+                card.style.display = 'none';
+              }
+            }
+          });
+          
+          console.log(`Filtering products by: ${filter}`);
+        });
+      });
+      
+      // Navigation functionality
+      const prevBtn = document.getElementById('prevBtn');
+      const nextBtn = document.getElementById('nextBtn');
+      const progressBar = document.querySelector('.progress-bar-index-sec');
+      
+      let currentCollection = 0;
+      const totalCollections = 5;
+      
+      function updateProgress() {
+        const progressPercentage = ((currentCollection + 1) / totalCollections) * 100;
+        progressBar.style.width = `${progressPercentage}%`;
+      }
+      
+      prevBtn.addEventListener('click', function() {
+        if (currentCollection > 0) {
+          currentCollection--;
+          updateProgress();
+          console.log(`Navigating to previous collection: ${currentCollection + 1}/${totalCollections}`);
+        }
+      });
+      
+      nextBtn.addEventListener('click', function() {
+        if (currentCollection < totalCollections - 1) {
+          currentCollection++;
+          updateProgress();
+          console.log(`Navigating to next collection: ${currentCollection + 1}/${totalCollections}`);
+        }
+      });
+      
+      document.getElementById('heroZoomBtn').addEventListener('click', function() {
+        document.getElementById('productModal').classList.add('active');
+        document.body.style.overflow = 'hidden';
+      });
+      
+      document.querySelector('.modal-close').addEventListener('click', function() {
+          document.getElementById('productModal').classList.remove('active');
+          document.body.style.overflow = '';
+      });
+      
+      document.querySelector('.modal-overlay').addEventListener('click', function() {
+          document.getElementById('productModal').classList.remove('active');
+          document.body.style.overflow = '';
+      });
+    });
+  </script>
+
+  <script>
+    document.addEventListener('DOMContentLoaded', function() {
+      const newwContainer = document.querySelector('.neww');
+      const prevBtnNeww = document.querySelector('.product-nav #prevBtn');
+      const nextBtnNeww = document.querySelector('.product-nav #nextBtn');
+      
+      if (newwContainer && prevBtnNeww && nextBtnNeww) {
+        const scrollStep = 300;
+        
+        prevBtnNeww.addEventListener('click', () => {
+          newwContainer.scrollBy({
+            left: -scrollStep,
+            behavior: 'smooth'
+          });
+        });
+        
+        nextBtnNeww.addEventListener('click', () => {
+          newwContainer.scrollBy({
+            left: scrollStep,
+            behavior: 'smooth'
+          });
+        });
+      }
+
+      const productGrid = document.querySelector('.product-grid-index-sec');
+      const prevBtnGrid = document.querySelector('.collection-nav-index-sec #prevBtn');
+      const nextBtnGrid = document.querySelector('.collection-nav-index-sec #nextBtn');
+      
+      if (productGrid && prevBtnGrid && nextBtnGrid) {
+        const scrollStep = 300;
+        
+        prevBtnGrid.addEventListener('click', () => {
+          productGrid.scrollBy({
+            left: -scrollStep,
+            behavior: 'smooth'
+          });
+        });
+        
+        nextBtnGrid.addEventListener('click', () => {
+          productGrid.scrollBy({
+            left: scrollStep,
+            behavior: 'smooth'
+          });
+        });
+      }
+    });
+  </script>
+{% endblock content %}

@@ -1,0 +1,243 @@
+{% extends "main/base.html" %}
+{% load static %}
+
+{% block title %}Catalog{% endblock title %}
+
+{% block content %}
+  <!-- Main Content -->
+  <main class="container-custom">
+    <!-- Heading and Description -->
+    <h1 class="main-heading fade-in">
+      {% if selected_category %}
+        {{ selected_category.name|upper }}
+      {% else %}
+        FRAGRANCES
+      {% endif %}
+    </h1>
+    
+    {% if selected_category %}
+      <div class="brand-description fade-in delay-1">
+        <p>{{ selected_category.description|safe }}</p>
+      </div>
+    {% endif %}
+    
+    <!-- Filter and Sort -->
+    <div class="filter-sort-section fade-in delay-2">
+      <!-- Кнопка фильтров (открывает модальное окно) -->
+      <button class="filter-btn" id="filterModalBtn">
+        FILTER <i class="fas fa-sliders-h"></i>
+      </button>
+      
+      <!-- Выпадающий список сортировки -->
+      <form method="get" action="." class="sort-form">
+        {% for key, value in request.GET.items %}
+          {% if key != 'sort' %}
+            <input type="hidden" name="{{ key }}" value="{{ value }}">
+          {% endif %}
+        {% endfor %}
+        <div class="sort-dropdown">
+          <label for="sortOptions">Sort By:</label>
+          <select name="sort" id="sortOptions" onchange="this.form.submit()">
+            <option value="" {% if not request.GET.sort %}selected{% endif %}>Default</option>
+            <option value="price_asc" {% if request.GET.sort == "price_asc" %}selected{% endif %}>Low to High</option>
+            <option value="price_desc" {% if request.GET.sort == "price_desc" %}selected{% endif %}>High to Low</option>
+            <option value="on_sale" {% if request.GET.sort == "on_sale" %}selected{% endif %}>On Sale</option>
+          </select>
+        </div>
+      </form>
+      
+      <!-- Модальное окно фильтров (изначально скрыто) -->
+      <div class="filter-modal" id="filterModal">
+        <div class="modal-content">
+          <span class="close-modal">×</span>
+          
+          <form method="get" action="." class="filter-form">
+            <!-- Categories Filter -->
+            <div class="filter-group">
+              <h3>Categories</h3>
+              {% for category in categories %}
+                <div class="filter-checkbox">
+                  <input type="checkbox" name="category" value="{{ category.slug }}" 
+                         id="cat-{{ category.slug }}" 
+                         {% if category.slug in selected_categories %}checked{% endif %}>
+                  <label for="cat-{{ category.slug }}">{{ category.name }}</label>
+                </div>
+              {% endfor %}
+            </div>
+            
+            <!-- Capacities Filter -->
+            <div class="filter-group">
+              <h3>Capacity</h3>
+              {% for capacity in capacities %}
+                <div class="filter-checkbox">
+                  <input type="checkbox" name="category" value="{{ capacity.volume }}" 
+                         id="cap-{{ capacity.id }}"
+                         {% if capacity.volume in selected_capacities %}checked{% endif %}>
+                  <label for="cap-{{ capacity.id }}">{{ capacity.volume }}</label>
+                </div>
+              {% endfor %}
+            </div>
+            
+            <!-- Olfactory Families Filter -->
+            <div class="filter-group">
+              <h3>Olfactory Family</h3>
+              <select name="olfactory_family">
+                <option value="" {% if not selected_olfactory_family %}selected{% endif %}>All Families</option>
+                {% for family in olfactory_families %}
+                  <option value="{{ family.id }}" 
+                          {% if selected_olfactory_family == family.id|stringformat:"s" %}selected{% endif %}>
+                    {{ family.name }}
+                  </option>
+                {% endfor %}
+              </select>
+            </div>
+            
+            <!-- Price Range -->
+            <div class="filter-group">
+              <h3>Price Range</h3>
+              <div class="price-range">
+                <input type="number" name="min_price" placeholder="Min" value="{{ request.GET.min_price }}">
+                <span>-</span>
+                <input type="number" name="max_price" placeholder="Max" value="{{ request.GET.max_price }}">
+              </div>
+            </div>
+            
+            <!-- Search -->
+            <div class="filter-group">
+              <h3>Search</h3>
+              <input type="text" name="search" placeholder="Search perfumes..." value="{{ request.GET.search }}">
+            </div>
+            
+            <div class="modal-actions">
+              <button type="submit" class="apply-filters">APPLY FILTERS</button>
+              <a href="." class="clear-filters">Clear all filters</a>
+            </div>
+          </form>
+        </div>
+      </div>
+    </div>
+    
+    <!-- Product Grid -->
+    <div class="product-section d-flex justify-content-center">
+      {% for perfume in perfumes %}
+        <div class="col-md-6 col-lg-3 product-card fade-in delay-{{ forloop.counter }}">
+          <a href="{% url 'main:perfume_detail' perfume.slug %}">
+            {% if perfume.image %}
+              <img src="{{ perfume.image.url }}" alt="{{ perfume.name }}" class="product-image">
+            {% else %}
+              <img src="{% static 'images/noimg.png' %}" alt="{{ perfume.name }}" class="product-image">
+            {% endif %}
+          </a>
+          <h3 class="product-title">{{ perfume.name }}</h3>
+          <p class="product-price">
+            {% if perfume.discount > 0 %}
+              <span class="original-price">€{{ perfume.price }}</span>
+              €{{ perfume.get_price_with_discount }}
+            {% else %}
+              €{{ perfume.price }}
+            {% endif %}
+          </p>
+          
+          {% if perfume.available %}
+            <button class="btn btn-cart add-to-cart" 
+                    data-product="{{ perfume.id }}" 
+                    data-price="{{ perfume.get_price_with_discount }}"
+                    data-url="{% url 'main:perfume_detail' perfume.slug %}">
+              ADD TO CART
+            </button>
+          {% else %}
+            <button class="btn btn-sold-out" disabled>SOLD OUT</button>
+            <button class="btn btn-notify" data-product="{{ perfume.id }}">
+              NOTIFY ME WHEN AVAILABLE
+            </button>
+          {% endif %}
+        </div>
+      {% empty %}
+        <div class="col-12 no-results">
+          <p>No perfumes found matching your criteria.</p>
+          <a href="." class="clear-filters">Clear all filters</a>
+        </div>
+      {% endfor %}
+    </div>
+    
+    <!-- Pagination -->
+    {% if is_paginated %}
+      <div class="pagination">
+        {% if page_obj.has_previous %}
+          <a href="?page={{ page_obj.previous_page_number }}{% for key,value in request.GET.items %}{% if key != 'page' %}&{{ key }}={{ value }}{% endif %}{% endfor %}">Previous</a>
+        {% endif %}
+        
+        {% for num in page_obj.paginator.page_range %}
+          {% if page_obj.number == num %}
+            <span class="current">{{ num }}</span>
+          {% else %}
+            <a href="?page={{ num }}{% for key,value in request.GET.items %}{% if key != 'page' %}&{{ key }}={{ value }}{% endif %}{% endfor %}">{{ num }}</a>
+          {% endif %}
+        {% endfor %}
+        
+        {% if page_obj.has_next %}
+          <a href="?page={{ page_obj.next_page_number }}{% for key,value in request.GET.items %}{% if key != 'page' %}&{{ key }}={{ value }}{% endif %}{% endfor %}">Next</a>
+        {% endif %}
+      </div>
+    {% endif %}
+  </main>
+  
+  <script>
+    document.addEventListener('DOMContentLoaded', function() {
+      // Корзина (перенаправление)
+      const addToCartButtons = document.querySelectorAll('.add-to-cart');
+
+      addToCartButtons.forEach(button => {
+        button.addEventListener('click', function() {
+          const url = this.getAttribute('data-url');
+          
+          // Анимация кнопки
+          const originalText = this.textContent;
+          this.textContent = 'REDIRECTING...';
+          this.style.backgroundColor = '#333';
+          this.style.color = '#fff';
+          
+          setTimeout(() => {
+            window.location.href = url; // Перенаправление на страницу товара
+          }, 1000);
+        });
+      });
+
+      // Уведомления
+      const notifyButtons = document.querySelectorAll('.btn-notify');
+      notifyButtons.forEach(button => {
+        button.addEventListener('click', function() {
+          const productId = this.getAttribute('data-product');
+          
+          console.log(`Notification set for product ID: ${productId}`);
+          
+          const originalText = this.textContent;
+          this.textContent = 'YOU WILL BE NOTIFIED';
+          
+          setTimeout(() => {
+            this.textContent = originalText;
+          }, 2000);
+        });
+      });
+
+      // Модальное окно фильтров
+      const modal = document.getElementById('filterModal');
+      const btn = document.getElementById('filterModalBtn');
+      const span = document.querySelector('.close-modal');
+      
+      btn.onclick = function() {
+        modal.style.display = 'block';
+      }
+      
+      span.onclick = function() {
+        modal.style.display = 'none';
+      }
+      
+      window.onclick = function(event) {
+        if (event.target == modal) {
+          modal.style.display = 'none';
+        }
+      }
+    });
+  </script>
+{% endblock content %}

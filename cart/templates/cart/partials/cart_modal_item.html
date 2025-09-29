@@ -1,0 +1,40 @@
+<div class="item-cart-sec" data-item-id="{% if item.type == 'product' %}{{ item.perfume.id }}{% elif item.type == 'sample' %}{{ item.sample.id }}{% else %}{{ item.gift.id }}{% endif %}" data-capacity-id="{% if item.type == 'product' %}{{ item.capacity.id }}{% endif %}">
+    <div class="image-cart-sec">
+        {% if item.type == 'product' %}
+            <img src="{{ item.perfume.image.url }}" alt="{{ item.perfume.name|safe }}">
+        {% elif item.type == 'sample' %}
+            <img src="{{ item.sample.image.url }}" alt="{{ item.sample.name|safe }}">
+        {% else %}
+            <img src="{{ item.gift.image.url }}" alt="{{ item.gift.name|safe }}">
+        {% endif %}
+    </div>
+    <div class="details-cart-sec">
+        {% if item.type == 'product' %}
+            <h2 class="name-cart-sec titles-cinzel">{{ item.perfume.name|safe }}</h2>
+            <p class="price-cart-sec">€{{ item.price }}</p>
+            <p class="capacity-cart-sec">Capacity: {{ item.capacity.volume }}</p>
+            <div class="quantity-cart-sec">
+                <form method="POST" action="{% url 'cart:cart_update_quantity' item.perfume.id item.capacity.id %}" 
+                      hx-post="{% url 'cart:cart_update_quantity' item.perfume.id item.capacity.id %}" 
+                      hx-target="#cartModalContent">
+                    {% csrf_token %}
+                    <button type="submit" name="quantity" value="{{ item.quantity|add:'-1' }}" class="quantity-btn-cart-sec decrease-cart-sec">−</button>
+                    <input type="text" class="quantity-input-cart-sec" value="{{ item.quantity }}" readonly>
+                    <button type="submit" name="quantity" value="{{ item.quantity|add:'1' }}" class="quantity-btn-cart-sec increase-cart-sec">+</button>
+                </form>
+            </div>
+        {% elif item.type == 'sample' %}
+            <h2 class="name-cart-sec titles-cinzel">{{ item.sample.name|safe }} (SAMPLE)</h2>
+            <p class="price-cart-sec">€0</p>
+        {% else %}
+            <h2 class="name-cart-sec titles-cinzel">{{ item.gift.name|safe }} (GIFT WRAP)</h2>
+            <p class="price-cart-sec">€{{ item.gift.price }}</p>
+        {% endif %}
+    </div>
+    <form method="POST" action="{% if item.type == 'product' %}{% url 'cart:cart_remove' item.perfume.id item.capacity.id %}{% elif item.type == 'sample' %}{% url 'cart:cart_remove_sample' item.sample.id %}{% else %}{% url 'cart:cart_remove_gift' %}{% endif %}" 
+          hx-post="{% if item.type == 'product' %}{% url 'cart:cart_remove' item.perfume.id item.capacity.id %}{% elif item.type == 'sample' %}{% url 'cart:cart_remove_sample' item.sample.id %}{% else %}{% url 'cart:cart_remove_gift' %}{% endif %}" 
+          hx-target="#cartModalContent">
+        {% csrf_token %}
+        <button type="submit" class="remove-cart-sec">×</button>
+    </form>
+</div>
