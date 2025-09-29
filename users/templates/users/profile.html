@@ -1,0 +1,221 @@
+{% extends 'main/base.html' %}
+{% load static %}
+
+{% block title %}Your Profile{% endblock %}
+
+{% block content %}
+    <div class="line"></div>
+    <div class="container-profile-template">
+        <div class="row-profile-template">
+            <div class="col-profile-template col-md-12">
+                <h1 class="greeting-profile-template titles-cinzel">HI, {{ request.user.first_name|upper }} {{ request.user.last_name|upper }}</h1>
+            </div>
+        </div>
+        
+        <div class="row-profile-template d-flex justify-content-between mt-4">
+            <!-- Sidebar Navigation -->
+            <div class="left-sidebar-profile">
+                <div class="sidebar-profile-template">
+                    <ul class="nav-list-profile-template">
+                        <li class="nav-item-profile-template active-profile-template">
+                            <a href="{% url 'users:profile' %}" class="nav-link-profile-template">
+                                <span class="icon-profile-template" style="display: inline;">→</span> ACCOUNT
+                            </a>
+                        </li>
+                        <li class="nav-item-profile-template">
+                            <a href="#" 
+                               hx-get="#" 
+                               hx-target=".col-profile-template.col-md-9" 
+                               hx-swap="innerHTML" 
+                               class="nav-link-profile-template">
+                                <span class="icon-profile-template" style="display: none;">→</span> ORDER HISTORY
+                            </a>
+                        </li>
+                        <li class="nav-item-profile-template">
+                            <a href="{% url 'users:logout' %}" class="nav-link-profile-template">
+                                <span class="icon-profile-template" style="display: none;">→</span> LOG OUT
+                            </a>
+                        </li>
+                    </ul>
+                </div>
+            </div>
+            
+            <!-- Main Content -->
+            <div class="col-profile-template col-md-9">
+                <div class="row-profile-template d-flex gap-3">
+                    <!-- Latest Order -->
+                    <div class="col-profile-template fix-height">
+                        <div class="card-profile-template">
+                            <div class="card-header-profile-template titles-cinzel">
+                                LATEST ORDER
+                            </div>
+                            <div class="card-body-profile-template">
+                                {% if latest_order %}
+                                    <h3 class="order-title-profile-template">Order #{{ latest_order.id }}</h3>
+                                    <p class="order-date-profile-template">Placed on: {{ latest_order.created_at|date:"F d, Y" }}</p>
+                                    <p class="order-status-profile-template">Status: {{ latest_order.get_status_display }}</p>
+                                    <p class="order-total-profile-template">Total: €{{ latest_order.get_discounted_total }}</p>
+                                {% else %}
+                                    <p class="empty-state-profile-template">You haven't placed any orders yet.</p>
+                                {% endif %}
+                            </div>
+                        </div>
+                        <div class="button-container-profile-template">
+                            {% if latest_order %}
+                                <button class="btn-profile-template need-p-btn" 
+                                        hx-get="{% url 'users:order_history' %}" 
+                                        hx-target=".col-profile-template.col-md-9" 
+                                        hx-swap="innerHTML">VIEW</button>
+                            {% else %}
+                                <button class="btn-profile-template need-p-btn" 
+                                        onclick="window.location.href='{% url 'main:home' %}'">SHOP NOW</button>
+                            {% endif %}
+                        </div>
+                    </div>
+                    
+                    <!-- Account Details -->
+                    <div class="col-profile-template brbd">
+                        <div class="card-profile-template">
+                            <div class="card-header-profile-template titles-cinzel">
+                                ACCOUNT DETAILS
+                            </div>
+                            <div class="card-body-profile-template" id="account-details-content">
+                                <div class="address-box">
+                                    <p class="default-address">Default Address</p>
+                                    <p class="address-name-profile-template">{{ request.user.first_name }} {{ request.user.last_name }}</p>
+                                    <p class="address-location-profile-template">{{ request.user.country|default:"Italy" }}</p>
+                                </div>
+                                <div class="button-container-profile-template d-flex gap-3">
+                                    <button hx-get="{% url 'users:edit_account_details' %}" 
+                                            hx-target="#account-details-content" 
+                                            hx-swap="innerHTML" 
+                                            class="btn-profile-template">Edit</button>
+                                    <button class="btn-profile-template">Delete</button>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                
+                <!-- Recommendations Section -->
+                <div class="recommendations-profile-template">
+                    <h2 class="section-title-profile-template">YOU MAY ALSO LIKE</h2>
+                    
+                    <div class="row-profile-template d-flex gap-2">
+                        {% for perfume in recommended_perfumes %}
+                            <div class="col-profile-templatee">
+                                <div class="product-card-profile-template">
+                                    <div class="product-image-profile-template">
+                                        {% if perfume.image %}
+                                            <img src="{{ perfume.image.url }}" alt="{{ perfume.name }}" class="img-fluid-profile-template">
+                                        {% else %}
+                                            <img src="{% static 'img/placeholder.jpg' %}" alt="{{ perfume.name }}" class="img-fluid-profile-template">
+                                        {% endif %}
+                                    </div>
+                                    <div class="product-info-profile-template">
+                                        <h3 class="product-name-profile-template">{{ perfume.name }}</h3>
+                                        <p class="product-price-profile-template">€{{ perfume.get_price_with_discount }}</p>
+                                    </div>
+                                    <div class="button-container-profile-template">
+                                        <a href="{{ perfume.get_absolute_url }}" 
+                                        class="btn-profile-template btn-sm-profile-template" 
+                                        data-product-id="{{ perfume.id }}">CHOOSE OPTIONS</a>
+                                    </div>
+                                </div>
+                            </div>
+                        {% empty %}
+                            <div class="col-profile-template col-md-12">
+                                <p class="empty-state-profile-template">No recommended products available at the moment.</p>
+                            </div>
+                        {% endfor %}
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+    <script>
+        document.addEventListener('DOMContentLoaded', function() {
+            // Navigation active state and arrow management
+            const navItems = document.querySelectorAll('.nav-item-profile-template');
+            
+            navItems.forEach(item => {
+                item.addEventListener('click', function(e) {
+                    const link = this.querySelector('a');
+                    // Проверяем, есть ли у ссылки атрибут hx-get или href не равен '#'
+                    if (!link.getAttribute('hx-get') && link.getAttribute('href') === '#') {
+                        e.preventDefault();
+                    }
+                    // Удаляем активный класс и скрываем стрелочку у всех пунктов
+                    navItems.forEach(navItem => {
+                        navItem.classList.remove('active-profile-template');
+                        navItem.querySelector('.icon-profile-template').style.display = 'none';
+                    });
+                    // Добавляем активный класс и показываем стрелочку у текущего пункта
+                    this.classList.add('active-profile-template');
+                    this.querySelector('.icon-profile-template').style.display = 'inline';
+                });
+            });
+            
+            // Button hover effects
+            const buttons = document.querySelectorAll('.btn-profile-template');
+            
+            buttons.forEach(button => {
+                button.addEventListener('mouseenter', function() {
+                    this.style.backgroundColor = '#000';
+                    this.style.color = '#fff';
+                });
+                
+                button.addEventListener('mouseleave', function() {
+                    this.style.backgroundColor = 'transparent';
+                    this.style.color = '#000';
+                });
+            });
+            
+            // Product click handler
+            const productCards = document.querySelectorAll('.product-card-profile-template');
+            
+            productCards.forEach((card) => {
+                card.addEventListener('click', function(e) {
+                    // Проверяем, что клик не по кнопке "CHOOSE OPTIONS"
+                    if (!e.target.closest('.btn-profile-template')) {
+                        const productName = this.querySelector('.product-name-profile-template').textContent;
+                        const productUrl = this.querySelector('.btn-profile-template').getAttribute('href');
+                        console.log(`Product card clicked: ${productName}`);
+                        window.location.href = productUrl;
+                    }
+                });
+            });
+            
+            // Shop now button click handler
+            const shopNowButton = document.querySelector('.card-body-profile-template .btn-profile-template');
+            
+            if (shopNowButton) {
+                shopNowButton.addEventListener('click', function() {
+                    console.log('Shop Now button clicked');
+                });
+            }
+            
+            // Choose options buttons click handlers
+            const chooseOptionsButtons = document.querySelectorAll('.btn-sm-profile-template');
+            
+            chooseOptionsButtons.forEach((button) => {
+                button.addEventListener('click', function(e) {
+                    e.stopPropagation(); // Предотвращаем срабатывание клика по карточке
+                });
+            });
+
+            // HTMX after swap animation
+            document.body.addEventListener('htmx:afterSwap', function(event) {
+                const target = event.detail.target;
+                if (target.classList.contains('col-md-9')) {
+                    // Добавляем класс анимации после замены контента
+                    target.classList.add('animate-section');
+                    // Удаляем класс после завершения анимации
+                    setTimeout(() => {
+                        target.classList.remove('animate-section');
+                    }, 500); // Длительность анимации (0.5s)
+                }
+            });
+        });
+    </script>
+{% endblock %}

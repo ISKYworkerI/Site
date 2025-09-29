@@ -1,0 +1,46 @@
+<div class="row-profile-template d-flex gap-3">
+    <div class="col-profile-template col-md-12">
+        <div class="card-profile-template">
+            <div class="card-header-profile-template titles-cinzel">
+                ORDER HISTORY
+            </div>
+            <div class="card-body-profile-template">
+                {% if orders %}
+                    {% for order in orders %}
+                        <div class="order-item-profile-template mb-4">
+                            <div class="order-title-profile-template d-flex justify-content-between">
+                                <h3 class="order-title-profile-template">Order #{{ order.id }}</h3>
+                                <p class="order-date-profile-template">Placed on: {{ order.created_at|date:"F d, Y" }}</p>
+                            </div>
+                            
+                            <p class="order-status-profile-template">Status: {{ order.get_status_display }}</p>
+                            <p class="order-total-profile-template">Total: €{{ order.get_discounted_total }}</p>
+                            {% if order.promo_code %}
+                                <p class="order-promo-profile-template">Promo Code: {{ order.promo_code.code }} ({{ order.discount_percentage }}% off)</p>
+                            {% endif %}
+                            <div class="order-items-profile-template">
+                                <h4>Items:</h4>
+                                <ul>
+                                    {% for item in order.items.all %}
+                                        <li>{{ item.perfume.name }} - {{ item.capacity.volume }} (x{{ item.quantity }}) - €{{ item.get_total_price }}</li>
+                                    {% endfor %}
+                                    {% for sample in order.samples.all %}
+                                        <li>Sample: {{ sample.sample.name }}</li>
+                                    {% endfor %}
+                                    {% for gift in order.gift.all %}
+                                        <li>Gift: {{ gift.gift.name }} - €{{ gift.price }}</li>
+                                    {% endfor %}
+                                </ul>
+                            </div>
+                        </div>
+                    {% endfor %}
+                {% else %}
+                    <p class="empty-state-profile-template">You haven't placed any orders yet.</p>
+                    <div class="button-container-profile-template">
+                        <button class="btn-profile-template need-p-btn" onclick="window.location.href='{% url 'main:home' %}'">SHOP NOW</button>
+                    </div>
+                {% endif %}
+            </div>
+        </div>
+    </div>
+</div>

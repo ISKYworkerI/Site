@@ -1,0 +1,13 @@
+<div class="address-box">
+    <p class="default-address">Default Address</p>
+    <p class="address-name-profile-template">{{ request.user.first_name }} {{ request.user.last_name }}</p>
+    <p class="address-location-profile-template">{{ request.user.country|default:"Italy" }}</p>
+    
+</div>
+<div class="button-container-profile-template d-flex gap-3">
+    <button hx-get="{% url 'users:edit_account_details' %}" 
+            hx-target="#account-details-content" 
+            hx-swap="innerHTML" 
+            class="btn-profile-template">Edit</button>
+    <button class="btn-profile-template">Delete</button>
+</div>

@@ -1,0 +1,43 @@
+{% extends 'main/base.html' %}
+
+{% block title %}Log In{% endblock %}
+
+{% block content %}
+    <div class="container-register">
+        <div class="row-register d-flex  justify-content-center">
+            <div class="col-register col-md-6">
+                <div class="form-container-register">
+                    <h1 class="title-register titles-cinzel">LOGIN</h1>
+                    <form class="form-register" method="post">
+                        {% csrf_token %}
+                        
+                        <div class="form-group-register">
+                            <label for="{{ form.username.id_for_label }}" class="label-register">EMAIL</label>
+                            {{ form.username }}
+                            {% if form.username.errors %}
+                                <div class="text-danger">{{ form.username.errors }}</div>
+                            {% endif %}
+                        </div>
+                        
+                        <div class="form-group-register">
+                            <label for="{{ form.password.id_for_label }}" class="label-register">PASSWORD</label>
+                            {{ form.password }}
+                            {% if form.password.errors %}
+                                <div class="text-danger">{{ form.password.errors }}</div>
+                            {% endif %}
+                        </div>
+                        
+                        <button type="submit" class="submit-button-register">LOG IN</button>
+                        
+                        <div class="login-link-register">
+                            <a href="{% url 'users:password_reset_request' %}" class="link-register">Forgot your password?</a>
+                        </div>
+                        <div class="login-link-register">
+                            <a href="{% url 'users:register' %}" class="link-register">Don't have an account? Register</a>
+                        </div>
+                    </form>
+                </div>
+            </div>
+        </div>
+    </div>
+{% endblock %}

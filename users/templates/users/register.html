@@ -1,0 +1,91 @@
+{% extends 'main/base.html' %}
+
+{% block title %}Create Account{% endblock %}
+
+{% block content %}
+    <div class="container-register">
+        <div class="row-register d-flex justify-content-center">
+            <div class="col-register col-md-6">
+                <div class="form-container-register">
+                    <h1 class="title-register titles-cinzel">CREATE ACCOUNT</h1>
+                    <form class="form-register" id="registrationForm" method="post">
+                    {% csrf_token %}
+                    
+                    <div class="form-group-register">
+                        <label for="{{ form.first_name.id_for_label }}" class="label-register">FIRST NAME</label>
+                        {{ form.first_name }}
+                        {% if form.first_name.errors %}
+                        <div class="text-danger">{{ form.first_name.errors }}</div>
+                        {% endif %}
+                    </div>
+                    
+                    <div class="form-group-register">
+                        <label for="{{ form.last_name.id_for_label }}" class="label-register">LAST NAME</label>
+                        {{ form.last_name }}
+                        {% if form.last_name.errors %}
+                        <div class="text-danger">{{ form.last_name.errors }}</div>
+                        {% endif %}
+                    </div>
+                    
+                    <div class="form-group-register">
+                        <label for="{{ form.email.id_for_label }}" class="label-register">EMAIL</label>
+                        {{ form.email }}
+                        {% if form.email.errors %}
+                        <div class="text-danger">{{ form.email.errors }}</div>
+                        {% endif %}
+                    </div>
+                    
+                    <div class="form-group-register">
+                        <label for="{{ form.password1.id_for_label }}" class="label-register">PASSWORD</label>
+                        {{ form.password1 }}
+                        {% if form.password1.errors %}
+                        <div class="text-danger">{{ form.password1.errors }}</div>
+                        {% endif %}
+                    </div>
+                    
+                    <div class="form-group-register">
+                        <label for="{{ form.password2.id_for_label }}" class="label-register">CONFIRM PASSWORD</label>
+                        {{ form.password2 }}
+                        {% if form.password2.errors %}
+                        <div class="text-danger">{{ form.password2.errors }}</div>
+                        {% endif %}
+                    </div>
+                    
+                    <div class="checkbox-group-register">
+                        <div class="form-check-register">
+                        {{ form.marketing_consent1 }}
+                        <label class="checkbox-label-register" for="{{ form.marketing_consent1.id_for_label }}">
+                            I declare that I agree to receive commercial, promotional, and marketing communications from Officina Profumo-Farmaceutica di Santa Maria Novella S.p.A.
+                        </label>
+                        {% if form.marketing_consent1.errors %}
+                            <div class="text-danger">{{ form.marketing_consent1.errors }}</div>
+                        {% endif %}
+                        </div>
+                        
+                        <div class="form-check-register">
+                        {{ form.marketing_consent2 }}
+                        <label class="checkbox-label-register" for="{{ form.marketing_consent2.id_for_label }}">
+                            I declare that I agree to receive commercial, promotional and marketing communications personalized on the basis of my interests from Officina Profumo-Farmaceutica di Santa Maria Novella S.p.A.
+                        </label>
+                        {% if form.marketing_consent2.errors %}
+                            <div class="text-danger">{{ form.marketing_consent2.errors }}</div>
+                        {% endif %}
+                        </div>
+                    </div>
+                    
+                    <div class="privacy-statement-register">
+                        I declare that I am at least 16 years old and I have read and understood the 
+                        <a href="#" class="link-register">Privacy Policy</a>.
+                    </div>
+                    
+                    <button type="submit" class="submit-button-register">CREATE</button>
+                    
+                    <div class="login-link-register">
+                        <a href="{% url 'users:login' %}" class="link-register">Already registered? Log in</a>
+                    </div>
+                    </form>
+                </div>
+            </div>
+        </div>
+    </div>
+{% endblock %}
