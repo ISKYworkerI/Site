@@ -1,0 +1,22 @@
+{% load mathfilters %}
+
+<div class="subtotal-cart-page">
+    <span>Subtotal</span>
+    <span>€{{ total_price }}</span>
+</div>
+{% if discount > 0 %}
+<div class="discount-cart-page">
+    <span>Discount ({{ discount }}%)</span>
+    <span>-€{{ total_price|sub:discounted_price }}</span>
+</div>
+{% endif %}
+<div class="total-cart-page">
+    <span>Total</span>
+    <span>€{{ discounted_price }}</span>
+</div>
+{% if promo_message %}
+<div class="promo-message {% if 'Invalid' in promo_message %}error{% else %}success{% endif %}">
+    {{ promo_message }}
+</div>
+{% endif %}
+<p class="tax-info-cart-page">Tax included and shipping calculated at checkout</p>

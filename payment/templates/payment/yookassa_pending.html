@@ -1,0 +1,13 @@
+{% extends "main/base.html" %}
+{% load static %}
+
+{% block title %}Order Pending{% endblock title %}
+
+{% block content %}
+    <div class="container mt-5">
+        <h1>Order Pending</h1>
+        <p>Your order #{{ order.id }} is still being processed.</p>
+        <p>Please wait a moment or contact support if the status doesn't update soon.</p>
+        <a href="{% url 'orders:checkout' %}" class="btn btn-primary">Return to Checkout</a>
+    </div>
+{% endblock content %}

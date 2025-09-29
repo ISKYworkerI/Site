@@ -1,0 +1,13 @@
+{% extends "main/base.html" %}
+{% load static %}
+
+{% block title %}Order Successful{% endblock title %}
+
+{% block content %}
+    <div class="container mt-5">
+        <h1>Thank You for Your Order!</h1>
+        <p>Your order #{{ order.id }} has been successfully placed.</p>
+        <p>We will send you a confirmation email to <strong>{{ order.email }}</strong> shortly.</p>
+        <a href="{% url 'main:home' %}" class="btn btn-primary">Continue Shopping</a>
+    </div>
+{% endblock content %}

@@ -1,0 +1,282 @@
+{% load static %}
+{% load static mathfilters %}
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>{% block title %}{% endblock title %}</title>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <link rel="stylesheet" href="{% static 'bootstrap/css/bootstrap.min.css' %}">
+    <link rel="stylesheet" href="{% static 'css/main.css' %}">
+    <script src="https://unpkg.com/htmx.org@1.9.10"></script>
+    <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
+    {% block script_add %}{% endblock script_add %}
+    <svg xmlns="http://www.w3.org/2000/svg" style="display: none;">
+        <symbol id="themesvg_search" viewBox="0 0 24 24">
+          <path d="M15.5 14h-.79l-.28-.27a6.5 6.5 0 0 0 1.48-5.34c-.47-2.78-2.79-5-5.59-5.34a6.505 6.505 0 0 0-7.27 7.27c.34 2.8 2.56 5.12 5.34 5.59a6.5 6.5 0 0 0 5.34-1.48l.27.28v.79l4.25 4.25c.41.41 1.08.41 1.49 0 .41-.41.41-1.08 0-1.49L15.5 14zm-6 0C7.01 14 5 11.99 5 9.5S7.01 5 9.5 5 14 7.01 14 9.5 11.99 14 9.5 14z"/>
+        </symbol>
+    </svg>
+</head>
+<body>
+    <div class="checkout-page">
+        <div class="container-checkout-page">
+            <div class="row-checkout-page">
+                <!-- Левая колонка: Форма доставки -->
+                <div class="col-md-7 left-column-checkout-page">
+                    <!-- Логотип -->
+                    <div class="logo-container-checkout-page d-flex justify-content-center">
+                        <img src="{% static 'img/checkout-logo.png' %}" alt="Logo" class="logo-checkout-page">
+                    </div>
+        
+                    <!-- Секция "Account" -->
+                    <div class="account-section-checkout-page">
+                        <div class="section-header-checkout-page">
+                            <span>Account</span>
+                        </div>
+                        <div class="account-email-checkout-page">
+                            <p>{{ request.user.email }}</p>
+                        </div>
+                        <div class="consent-checkbox-checkout-page">
+                            <input type="checkbox" id="consent-checkbox">
+                            <label for="consent-checkbox">I declare that I consent to receive promotional and marketing communications.</label>
+                        </div>
+                    </div>
+        
+                    <!-- Секция "Delivery" -->
+                    <div class="delivery-section-checkout-page">
+                        <h3 class="section-title-checkout-page">Delivery</h3>
+        
+                        <form method="POST" id="checkout-form">
+                            {% csrf_token %}
+                            <input type="hidden" name="create_order" value="true">
+                            <input type="hidden" name="payment_provider" id="payment-provider" value="stripe">
+        
+                            <!-- Country -->
+                            <div class="form-group-checkout-page">
+                                <label class="form-label-checkout-page">Country/Region</label>
+                                <div class="select-wrapper-checkout-page">
+                                    {{ form.country }}
+                                </div>
+                                {% if form.country.errors %}
+                                    <div class="text-danger">{{ form.country.errors }}</div>
+                                {% endif %}
+                            </div>
+        
+                            <!-- First name и Last name -->
+                            <div class="row-checkout-page">
+                                <div class="col-md-6 form-group-checkout-page">
+                                    <label class="form-label-checkout-page">First name</label>
+                                    {{ form.first_name }}
+                                    {% if form.first_name.errors %}
+                                        <div class="text-danger">{{ form.first_name.errors }}</div>
+                                    {% endif %}
+                                </div>
+                                <div class="col-md-6 form-group-checkout-page">
+                                    <label class="form-label-checkout-page">Last name</label>
+                                    {{ form.last_name }}
+                                    {% if form.last_name.errors %}
+                                        <div class="text-danger">{{ form.last_name.errors }}</div>
+                                    {% endif %}
+                                </div>
+                            </div>
+        
+                            <!-- Address -->
+                            <div class="form-group-checkout-page">
+                                <label class="form-label-checkout-page">Address</label>
+                                <div class="input-with-icon-checkout-page">
+                                    {{ form.address1 }}
+                                    <i class="fas fa-search"></i>
+                                </div>
+                                {% if form.address1.errors %}
+                                    <div class="text-danger">{{ form.address1.errors }}</div>
+                                {% endif %}
+                            </div>
+        
+                            <!-- Apartment -->
+                            <div class="form-group-checkout-page">
+                                <label class="form-label-checkout-page">Apartment, suite, etc. (optional)</label>
+                                {{ form.address2 }}
+                                {% if form.address2.errors %}
+                                    <div class="text-danger">{{ form.address2.errors }}</div>
+                                {% endif %}
+                            </div>
+        
+                            <!-- Postal code, City, Province -->
+                            <div class="row-checkout-page">
+                                <div class="col-md-4 form-group-checkout-page">
+                                    <label class="form-label-checkout-page">Postal code</label>
+                                    {{ form.postal_code }}
+                                    {% if form.postal_code.errors %}
+                                        <div class="text-danger">{{ form.postal_code.errors }}</div>
+                                    {% endif %}
+                                </div>
+                                <div class="col-md-4 form-group-checkout-page">
+                                    <label class="form-label-checkout-page">City</label>
+                                    {{ form.city }}
+                                    {% if form.city.errors %}
+                                        <div class="text-danger">{{ form.city.errors }}</div>
+                                    {% endif %}
+                                </div>
+                                <div class="col-md-4 form-group-checkout-page">
+                                    <label class="form-label-checkout-page">Province</label>
+                                    <div class="select-wrapper-checkout-page">
+                                        {{ form.province }}
+                                    </div>
+                                    {% if form.province.errors %}
+                                        <div class="text-danger">{{ form.province.errors }}</div>
+                                    {% endif %}
+                                </div>
+                            </div>
+        
+                            <!-- Phone -->
+                            <div class="form-group-checkout-page">
+                                <label class="form-label-checkout-page">Phone</label>
+                                <div class="input-with-icon-checkout-page">
+                                    {{ form.phone }}
+                                    <i class="fas fa-question-circle"></i>
+                                </div>
+                                {% if form.phone.errors %}
+                                    <div class="text-danger">{{ form.phone.errors }}</div>
+                                {% endif %}
+                            </div>
+        
+                            <!-- Кнопки оплаты -->
+                            <button type="submit" class="pay-now-button-checkout-page" onclick="setPaymentProvider('stripe')">Pay Now (Stripe)</button>
+                            <button type="submit" class="pay-now-button-checkout-page yookassa-button" onclick="setPaymentProvider('yookassa')">Pay with Yookassa</button>
+                        </form>
+                    </div>
+        
+                    <!-- Условия -->
+                    <div class="terms-section-checkout-page">
+                        <p>By clicking "Pay Now" or "Pay with Yookassa", I declare that I am at least 16 years old and I have read and understood the <a href="#" class="link-checkout-page">Privacy Policy</a> and the <a href="#" class="link-checkout-page">Conditions of Sale</a>.</p>
+                    </div>
+        
+                    <!-- Футер -->
+                    <div class="footer-checkout-page">
+                        <p>All rights reserved</p>
+                    </div>
+                </div>
+        
+                <!-- Правая колонка: Сводка заказа -->
+                <div class="col-md-5 right-column-checkout-page">
+                    <div class="cart-items-checkout-page">
+                        {% for item in cart %}
+                            <div class="cart-item-checkout-page">
+                                <div class="item-image-checkout-page">
+                                    {% if item.type == 'product' %}
+                                        <img src="{{ item.perfume.image.url }}" alt="{{ item.perfume.name }}">
+                                    {% elif item.type == 'sample' %}
+                                        <img src="{{ item.sample.image.url }}" alt="{{ item.sample.name }}">
+                                    {% else %}
+                                        <img src="{{ item.gift.image.url }}" alt="{{ item.gift.name }}">
+                                    {% endif %}
+                                    <span class="item-count-checkout-page">
+                                        {% if item.type == 'product' %}{{ item.quantity }}{% else %}1{% endif %}
+                                    </span>
+                                </div>
+                                <div class="item-details-checkout-page">
+                                    <p class="item-name-checkout-page">
+                                        {% if item.type == 'product' %}
+                                            {{ item.perfume.name|upper }}
+                                        {% elif item.type == 'sample' %}
+                                            {{ item.sample.name|upper }} (SAMPLE)
+                                        {% else %}
+                                            {{ item.gift.name|upper }} (GIFT WRAP)
+                                        {% endif %}
+                                    </p>
+                                    {% if item.type == 'product' and item.capacity %}
+                                        <p class="item-size-checkout-page">{{ item.capacity.volume }}</p>
+                                    {% endif %}
+                                </div>
+                                <div class="item-price-checkout-page">
+                                    <p>
+                                        {% if item.type == 'sample' %}
+                                            FREE
+                                        {% else %}
+                                            €{{ item.total_price }}
+                                        {% endif %}
+                                    </p>
+                                </div>
+                            </div>
+                        {% endfor %}
+                    </div>
+        
+                    <!-- Секция промокода -->
+                    <div class="discount-section-checkout-page">
+                        <form method="POST" hx-post="{% url 'orders:checkout' %}" hx-target="#order-summary" class="promo-form-cart-page">
+                            {% csrf_token %}
+                            <input type="hidden" name="apply_promo" value="true">
+                            {{ promo_form.code }}
+                            <button type="submit" class="apply-button-checkout-page">Apply</button>
+                        </form>
+                    </div>
+        
+                    <!-- Сводка -->
+                    <div id="order-summary" class="order-summary-checkout-page">
+                        <div class="summary-row-checkout-page">
+                            <span class="summary-label-checkout-page">Products</span>
+                            <span class="summary-value-checkout-page">
+                                €{% for item in cart %}{% if item.type == 'product' %}{{ item.total_price|add:0 }}{% endif %}{% endfor %}
+                            </span>
+                        </div>
+                        {% if cart.get_gift_wrap %}
+                        <div class="summary-row-checkout-page">
+                            <span class="summary-label-checkout-page">Gift Wrap</span>
+                            <span class="summary-value-checkout-page">€{{ cart.get_gift_wrap.price }}</span>
+                        </div>
+                        {% endif %}
+                        <div class="summary-row-checkout-page">
+                            <span class="summary-label-checkout-page">Subtotal · {{ cart|length }} item{{ cart|length|pluralize }}</span>
+                            <span class="summary-value-checkout-page">€{{ total_price }}</span>
+                        </div>
+                        <div class="summary-row-checkout-page">
+                            <span class="summary-label-checkout-page">Shipping</span>
+                            <span class="summary-value-checkout-page">Calculated at checkout</span>
+                        </div>
+                        {% if discount > 0 %}
+                        <div class="summary-row-checkout-page">
+                            <span class="summary-label-checkout-page">Discount ({{ discount }}%)</span>
+                            <span class="summary-value-checkout-page">-€{{ total_price|sub:discounted_price }}</span>
+                        </div>
+                        {% endif %}
+                        {% if promo_message %}
+                        <div class="promo-message {% if 'Invalid' in promo_message %}error{% else %}success{% endif %}">
+                            {{ promo_message }}
+                        </div>
+                        {% endif %}
+                    </div>
+        
+                    <!-- Итог -->
+                    <div class="total-section-checkout-page">
+                        <div class="total-row-checkout-page">
+                            <span class="total-label-checkout-page">Total</span>
+                            <div class="total-amount-checkout-page">
+                                <span class="currency-checkout-page">EUR</span>
+                                <span class="price-checkout-page">€{{ discounted_price }}</span>
+                            </div>
+                        </div>
+                        <div class="tax-info-checkout-page">
+                            <p>Tax included</p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        function setPaymentProvider(provider) {
+            document.getElementById('payment-provider').value = provider;
+        }
+    </script>
+
+    <style>
+        .yookassa-button {
+            background-color: #2196F3; /* Adjust color to match Yookassa branding */
+            margin-top: 10px;
+        }
+    </style>
+
+    <script src="{% static 'bootstrap/js/bootstrap.bundle.min.js' %}"></script>
+</body>
